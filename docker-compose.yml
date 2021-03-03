@@ -1,0 +1,82 @@
+version: '3.7'
+
+services:
+  proxy:
+    image: nginx:1.19.6-alpine
+    container_name: parrot-jira-proxy
+    ports:
+      - '80:80'
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    networks:
+      - parrot-backend-network
+      - parrot-frontend-network
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: parrot-jira-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - parrot-frontend-network
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: parrot-jira-api
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT}
+      - REDIS_HOST=redis
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=postgresql
+      - POSTGRES_DB=${POSTGRES_DB}
+    restart: unless-stopped
+    networks:
+      - parrot-backend-network
+    depends_on:
+      - postgresql
+      - redis
+
+  postgresql:
+    image: postgres:13.1-alpine
+    container_name: parrot-jira-api-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - parrot-jira-api-db:/var/lib/postgresql/data
+    networks:
+      - parrot-backend-network
+
+  redis:
+    image: redis:6.0.10-alpine
+    container_name: parrot-jira-redis
+    command: redis-server
+    volumes:
+      - parrot-jira-redis-data:/var/lib/redis/data
+    restart: unless-stopped
+    networks:
+      - parrot-backend-network
+
+networks:
+  parrot-backend-network:
+    driver: bridge
+  parrot-frontend-network:
+    driver: bridge
+
+volumes:
+  parrot-jira-redis-data:
+  parrot-jira-api-db:

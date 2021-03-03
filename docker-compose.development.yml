@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  proxy:
+    volumes:
+      - ./proxy/nginx-dev.conf:/etc/nginx/nginx.conf
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: npm run start
+    volumes:
+      - ./frontend/src:/app/src
+    ports:
+      - '3000:3000'
+    # stdin_open: true
+    # tty: true
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    # command: npm run dev
+    command: npm run dev
+    volumes:
+      - ./api/src:/app/src
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3001:3001'
+      - '9229:9229'
+    stdin_open: true
+    tty: true
+
+  postgresql:
+    ports:
+      - '5432:5432'
+
+  redis:
+    ports:
+      - '6379:6379'
