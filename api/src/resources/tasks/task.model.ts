@@ -25,7 +25,6 @@ export default function (sequelize: Sequelize): typeof TaskModel {
         type: DataTypes.TEXT,
       },
       completed: {
-        allowNull: false,
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },

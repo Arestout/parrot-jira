@@ -7,7 +7,7 @@ import { ITaskRepository } from './interfaces/taskRepository.interface';
 export class TaskRepository implements ITaskRepository {
   public tasks = DB.Tasks;
 
-  public async getAll(page = 1): Promise<TaskDTO[]> {
+  public async getAll(page: number): Promise<TaskDTO[]> {
     const limit = 50;
     const tasks = await this.tasks.findAll({
       limit,

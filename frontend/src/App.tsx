@@ -1,53 +1,26 @@
 import React from 'react';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
-import { ThemeProvider } from '@material-ui/styles';
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import {
-  AppBar,
-  CssBaseline,
-  Typography,
-  createMuiTheme,
-  Container,
-  Grid,
-} from '@material-ui/core';
+import { Header } from './components/Header';
+import { CssBaseline, Container } from '@material-ui/core';
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      flexGrow: 1,
-      marginTop: 50,
-    },
-    paper: {
-      padding: theme.spacing(2),
-      textAlign: 'center',
-      color: theme.palette.text.secondary,
-    },
-  })
-);
+import { TaskTracker } from './components/TaskTracker';
 
 export const App: React.FC = () => {
-  const classes = useStyles();
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-
-  const theme = React.useMemo(
-    () =>
-      createMuiTheme({
-        palette: {
-          type: prefersDarkMode ? 'dark' : 'light',
-        },
-      }),
-    [prefersDarkMode]
-  );
-
   return (
-    <div className="container">
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <ThemeProvider theme={theme}>
-          <div>Comming soon...</div>
-        </ThemeProvider>
-      </ErrorBoundary>
-    </div>
+    <React.Fragment>
+      <CssBaseline />
+      <Container maxWidth="lg">
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <Router>
+            <Header />
+            <Switch>
+              <Route path="/" exact component={TaskTracker} />
+            </Switch>
+          </Router>
+        </ErrorBoundary>
+      </Container>
+    </React.Fragment>
   );
 };
 

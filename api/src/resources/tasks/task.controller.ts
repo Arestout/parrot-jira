@@ -7,16 +7,16 @@ const taskRepository = new TaskRepository();
 export class TaskController {
   private taskService = new TaskService(taskRepository);
 
-  public async getAll(req: Request, res: Response, next: NextFunction) {
+  public getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page } = req.query;
-      const tasks = await this.taskService.getAll(page);
+      const { page = 0 } = req.query;
+      const tasks = await this.taskService.getAll(Number(page));
 
       res.status(200).json(tasks);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   public getById = async (req: Request, res: Response, next: NextFunction) => {
     try {

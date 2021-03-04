@@ -2,7 +2,7 @@ import Sequelize from 'sequelize';
 import { dbConfig } from '../config';
 import { logger } from '../utils/logger';
 import { NODE_ENV } from './../config/index';
-import { TaskModel } from './../resources/tasks/task.model';
+import TaskModel from './../resources/tasks/task.model';
 
 const env = NODE_ENV;
 const sequelize = new Sequelize.Sequelize(dbConfig[env].database, dbConfig[env].username, dbConfig[env].password, {
@@ -33,7 +33,7 @@ sequelize
   });
 
 const DB = {
-  Tasks: TaskModel,
+  Tasks: TaskModel(sequelize),
   sequelize, // connection instance (RAW queries)
   Sequelize, // library
 };
