@@ -12,7 +12,7 @@ import {
 } from '@material-ui/core';
 import axios from 'axios';
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
       flexGrow: 1,
@@ -33,7 +33,7 @@ export const Todo: React.FC = ({ todo }) => {
     try {
       const data = {
         ...todo,
-        completed: !status,
+        completed: true,
       };
       const response = await axios.put(`/api/tasks/${todo.id}`, data);
       setStatus(response.data.completed);
@@ -63,11 +63,9 @@ export const Todo: React.FC = ({ todo }) => {
                 aria-label="vertical contained primary button group"
                 variant="contained"
               >
-                <Button onClick={closeTask}>
-                  {status ? 'Re-Open' : 'Close'}
+                <Button disabled={todo.completed} onClick={closeTask}>
+                  {todo.completed ? 'Completed' : 'Complete'}
                 </Button>
-                {/* <Button>Two</Button>
-                <Button>Three</Button> */}
               </ButtonGroup>
             </Grid>
           </Grid>
