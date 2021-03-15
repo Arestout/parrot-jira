@@ -4,6 +4,8 @@ services:
   proxy:
     volumes:
       - ./proxy/nginx-dev.conf:/etc/nginx/nginx.conf
+    networks:
+      - parrot-tasks-network
 
   frontend:
     build:
@@ -17,11 +19,10 @@ services:
     # stdin_open: true
     # tty: true
 
-  api:
+  tasks:
     build:
       context: ./api
       dockerfile: Dockerfile.dev
-    # command: npm run dev
     command: npm run dev
     volumes:
       - ./api/src:/app/src
@@ -33,10 +34,29 @@ services:
     stdin_open: true
     tty: true
 
-  postgresql:
+  db-tasks:
     ports:
       - '5432:5432'
 
   redis:
     ports:
       - '6379:6379'
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./api-gateway/src:/app/src
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3003:3003'
+      - '9230:9229'
+    stdin_open: true
+    tty: true
+
+  db-api-gateway:
+    ports:
+      - '5433:5432'
