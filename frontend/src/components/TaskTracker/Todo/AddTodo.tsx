@@ -24,7 +24,10 @@ export const AddTodo: React.FC = ({ setTask }) => {
       const data = {
         description: todoText,
       };
-      const response = await axios.post('/api/tasks', data, { timeout: 1000 });
+      const response = await axios.post('/api/tasks', data, {
+        timeout: 1000,
+        withCredentials: true,
+      });
       setTask(response.data);
     } catch (error) {
       console.log(error);

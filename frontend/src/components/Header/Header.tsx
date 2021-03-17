@@ -194,9 +194,16 @@ export function Header() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography className={classes.title} variant="h6" noWrap>
-            ParrotJira
-          </Typography>
+          <Link
+            to="/"
+            component={RouterLink}
+            className={classes.menuLink}
+            variant="body2"
+          >
+            <Typography variant="h6" noWrap>
+              ParrotJira
+            </Typography>
+          </Link>
           <Link
             to="/sign-in"
             component={RouterLink}

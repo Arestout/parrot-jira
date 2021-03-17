@@ -15,9 +15,11 @@
     "docker-prod": "docker-compose up -d"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.3.2",
     "class-validator": "^0.13.1",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "envalid": "^6.0.2",
     "express": "^4.17.1",

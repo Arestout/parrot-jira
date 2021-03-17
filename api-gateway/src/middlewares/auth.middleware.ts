@@ -7,7 +7,6 @@ import { JWT_SECRET } from '../config';
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
     const cookies = req.cookies;
-
     if (cookies && cookies.Authorization) {
       jwt.verify(cookies.Authorization, JWT_SECRET, err => {
         if (err) {

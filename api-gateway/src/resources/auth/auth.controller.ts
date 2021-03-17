@@ -12,7 +12,7 @@ export class AuthController {
 
     try {
       const signUpUserData: UserDto = await this.authService.signup(userData);
-      res.status(201).json({ data: signUpUserData, message: 'signup' });
+      res.status(201).json({ data: signUpUserData, message: 'Registration successful' });
     } catch (error) {
       next(error);
     }

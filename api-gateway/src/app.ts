@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -7,7 +8,7 @@ import DB from './database';
 
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
-import { Routes } from './interfaces/routes.interface';
+import { Route } from './interfaces/routes.interface';
 import { PORT, NODE_ENV } from './config';
 
 class App {
@@ -15,7 +16,7 @@ class App {
   public port: string | number;
   public env: string;
 
-  constructor(routes: Routes[]) {
+  constructor(routes: Route[]) {
     this.app = express();
     this.port = PORT;
     this.env = NODE_ENV;
@@ -43,7 +44,7 @@ class App {
   private initializeMiddlewares() {
     if (this.env === 'production') {
       this.app.use(morgan('combined', { stream }));
-      this.app.use(cors({ origin: 'your.domain.com', credentials: true }));
+      this.app.use(cors({ origin: true, credentials: true }));
     } else if (this.env === 'development') {
       this.app.use(morgan('dev', { stream }));
       this.app.use(cors({ origin: true, credentials: true }));
@@ -53,9 +54,10 @@ class App {
     this.app.use(helmet());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cookieParser());
   }
 
-  private initializeRoutes(routes: Routes[]) {
+  private initializeRoutes(routes: Route[]) {
     routes.forEach(route => {
       this.app.use('/', route.router);
     });

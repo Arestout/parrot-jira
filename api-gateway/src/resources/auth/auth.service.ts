@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { CreateUserDto } from '../users/user.dto';
+import { CreateUserDto, LoginUser } from '../users/user.dto';
 import { HttpException } from '../../utils/HttpException';
 import { DataStoredInToken, TokenData } from './auth.interface';
 import { UserDto } from '../users/interfaces/user.interface';
@@ -19,10 +19,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const createUserData: UserDto = await this.users.create({ ...userData, password: hashedPassword });
 
+    // Stream user data
+
     return createUserData;
   }
 
-  public async login(userData: CreateUserDto): Promise<{ cookie: string; findUser: UserDto }> {
+  public async login(userData: LoginUser): Promise<{ cookie: string; findUser: UserDto }> {
     if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
 
     const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
@@ -47,7 +49,7 @@ export class AuthService {
   }
 
   public createToken(user: UserDto): TokenData {
-    const dataStoredInToken: DataStoredInToken = { id: user.id };
+    const dataStoredInToken: DataStoredInToken = { id: user.public_id };
     const secret: string = process.env.JWT_SECRET;
     const expiresIn: number = 60 * 60;
 
