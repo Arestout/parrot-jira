@@ -13,39 +13,43 @@ export class AuthService {
   public async signup(userData: CreateUserDto): Promise<UserDto> {
     if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
 
-    const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
-    if (findUser) throw new HttpException(409, `You're email ${userData.email} already exists`);
+    const transaction = await DB.sequelize.transaction();
 
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const createUserData: UserDto = await this.users.create({ ...userData, password: hashedPassword });
+    try {
+      const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
+      if (findUser) throw new HttpException(409, `Your email ${userData.email} already exists`);
 
-    // Stream user data
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const createUserData: UserDto = await this.users.create({ ...userData, password: hashedPassword });
 
-    return createUserData;
+      await transaction.commit();
+      return createUserData;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
-  public async login(userData: LoginUser): Promise<{ cookie: string; findUser: UserDto }> {
+  public async login(userData: LoginUser): Promise<{ tokenData: TokenData; findUser: UserDto }> {
     if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
 
-    const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
-    if (!findUser) throw new HttpException(409, `You're email ${userData.email} not found`);
+    const transaction = await DB.sequelize.transaction();
 
-    const isPasswordMatching: boolean = await bcrypt.compare(userData.password, findUser.password);
-    if (!isPasswordMatching) throw new HttpException(409, "You're password not matching");
+    try {
+      const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
+      if (!findUser) throw new HttpException(409, `Wrong email or password`);
 
-    const tokenData = this.createToken(findUser);
-    const cookie = this.createCookie(tokenData);
+      const isPasswordMatching: boolean = await bcrypt.compare(userData.password, findUser.password);
+      if (!isPasswordMatching) throw new HttpException(409, 'Wrong email or password');
 
-    return { cookie, findUser };
-  }
+      const tokenData = this.createToken(findUser);
 
-  public async logout(userData: UserDto): Promise<UserDto> {
-    if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
-
-    const findUser: UserDto = await this.users.findOne({ where: { password: userData.password } });
-    if (!findUser) throw new HttpException(409, "You're not user");
-
-    return findUser;
+      await transaction.commit();
+      return { tokenData, findUser };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   public createToken(user: UserDto): TokenData {
@@ -54,9 +58,5 @@ export class AuthService {
     const expiresIn: number = 60 * 60;
 
     return { expiresIn, token: jwt.sign(dataStoredInToken, secret, { expiresIn }) };
-  }
-
-  public createCookie(tokenData: TokenData): string {
-    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
   }
 }
