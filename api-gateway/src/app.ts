@@ -12,7 +12,6 @@ import { Route } from './interfaces/routes.interface';
 import { PORT, NODE_ENV } from './config';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import authMiddleware from './middlewares/auth.middleware';
-
 class App {
   public app: express.Application;
   public port: string | number;
