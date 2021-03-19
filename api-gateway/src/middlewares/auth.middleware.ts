@@ -5,22 +5,29 @@ import { DataStoredInToken, RequestWithUser } from '../resources/auth/auth.inter
 import { JWT_SECRET } from '../config';
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-  try {
-    const cookies = req.cookies;
-    if (cookies && cookies.Authorization) {
-      jwt.verify(cookies.Authorization, JWT_SECRET, err => {
-        if (err) {
-          return next(new HttpException(401, 'Invalid authentication token'));
-        }
+  const headerToken = req.headers.authorization;
 
-        return next();
-      }) as DataStoredInToken;
-    } else {
-      next(new HttpException(404, 'Authentication token missing'));
-    }
-  } catch (error) {
-    next(new HttpException(401, 'Wrong authentication token'));
+  if (!headerToken) {
+    return next(new HttpException(401, 'Authentication token missing'));
   }
+
+  const [tokenType, token] = headerToken.split(' ');
+
+  if (tokenType !== 'Bearer') {
+    return next(new HttpException(401, 'Invalid authentication token'));
+  }
+
+  if (!token) {
+    return next(new HttpException(401, 'Authentication token missing'));
+  }
+
+  jwt.verify(token, JWT_SECRET, err => {
+    if (err) {
+      return next(new HttpException(401, 'Invalid authentication token'));
+    }
+
+    return next();
+  }) as DataStoredInToken;
 };
 
 export default authMiddleware;

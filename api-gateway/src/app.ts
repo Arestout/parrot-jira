@@ -10,6 +10,8 @@ import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
 import { Route } from './interfaces/routes.interface';
 import { PORT, NODE_ENV } from './config';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import authMiddleware from './middlewares/auth.middleware';
 
 class App {
   public app: express.Application;
@@ -22,6 +24,7 @@ class App {
     this.env = NODE_ENV;
 
     this.connectToDatabase();
+    this.initializeProxyRoutes();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
@@ -61,6 +64,10 @@ class App {
     routes.forEach(route => {
       this.app.use('/', route.router);
     });
+  }
+
+  private initializeProxyRoutes() {
+    this.app.use('/tasks', [authMiddleware, createProxyMiddleware({ target: 'http://task-tracker:3001', changeOrigin: true })]);
   }
 
   private initializeErrorHandling() {
