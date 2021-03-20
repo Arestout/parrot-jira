@@ -68,8 +68,13 @@ export const SignIn: React.FC = () => {
       console.log(data);
       if (data) {
         const response = await axios.post('/api/auth/login', data);
-
+        console.log(response.data);
         if (response.data?.message === 'login') {
+          window.localStorage.setItem('token', response.data.tokenData.token);
+          window.localStorage.setItem(
+            'user',
+            JSON.stringify(response.data.userData)
+          );
           return history.push('/');
         } else {
           setFormStatus(formStatusProps.error);
