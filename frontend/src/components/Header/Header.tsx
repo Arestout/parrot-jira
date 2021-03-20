@@ -19,6 +19,8 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
+import Link from '@material-ui/core/Link';
+import { Link as RouterLink } from 'react-router-dom';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,6 +34,15 @@ const useStyles = makeStyles((theme: Theme) =>
       display: 'none',
       [theme.breakpoints.up('sm')]: {
         display: 'block',
+      },
+    },
+    menuLink: {
+      marginLeft: theme.spacing(2),
+      color: 'white',
+
+      '&:hover, &:focus': {
+        color: 'white',
+        textDecoration: 'underline',
       },
     },
     search: {
@@ -183,9 +194,36 @@ export function Header() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography className={classes.title} variant="h6" noWrap>
-            ParrotJira
-          </Typography>
+          <Link
+            to="/"
+            component={RouterLink}
+            className={classes.menuLink}
+            variant="body2"
+          >
+            <Typography variant="h6" noWrap>
+              ParrotJira
+            </Typography>
+          </Link>
+          <Link
+            to="/sign-in"
+            component={RouterLink}
+            className={classes.menuLink}
+            variant="body2"
+          >
+            <Typography variant="h6" noWrap>
+              Sign in
+            </Typography>
+          </Link>
+          <Link
+            to="/sign-up"
+            component={RouterLink}
+            className={classes.menuLink}
+            variant="body2"
+          >
+            <Typography variant="h6" noWrap>
+              Sign up
+            </Typography>
+          </Link>
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton

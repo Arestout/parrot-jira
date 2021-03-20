@@ -10,11 +10,11 @@ services:
       - ./proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
     networks:
-      - parrot-backend-network
       - parrot-frontend-network
+      - parrot-api-gateway-network
     depends_on:
       - frontend
-      - api
+      - api-gateway
 
   frontend:
     build:
@@ -27,29 +27,29 @@ services:
     networks:
       - parrot-frontend-network
     depends_on:
-      - api
+      - api-gateway
 
-  api:
+  tasks:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: parrot-jira-api
+    container_name: parrot-jira-tasks
     environment:
       - NODE_ENV=production
       - PORT=${PORT}
       - REDIS_HOST=redis
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_HOST=postgresql
+      - POSTGRES_HOST=db-tasks
       - POSTGRES_DB=${POSTGRES_DB}
     restart: unless-stopped
     networks:
-      - parrot-backend-network
+      - parrot-tasks-network
     depends_on:
-      - postgresql
+      - db-tasks
       - redis
 
-  postgresql:
+  db-tasks:
     image: postgres:13.1-alpine
     container_name: parrot-jira-api-db
     environment:
@@ -57,9 +57,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - parrot-jira-api-db:/var/lib/postgresql/data
+      - parrot-jira-tasks-db:/var/lib/postgresql/data
     networks:
-      - parrot-backend-network
+      - parrot-tasks-network
 
   redis:
     image: redis:6.0.10-alpine
@@ -69,14 +69,53 @@ services:
       - parrot-jira-redis-data:/var/lib/redis/data
     restart: unless-stopped
     networks:
-      - parrot-backend-network
+      - parrot-tasks-network
+      - parrot-api-gateway-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: parrot-jira-api-gateway
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT_API_GATEWAY}
+      - REDIS_HOST=redis
+      - POSTGRES_USER=${POSTGRES_USER_API_GATEWAY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API_GATEWAY}
+      - POSTGRES_HOST=db-api-gateway
+      - POSTGRES_DB=${POSTGRES_DB_API_GATEWAY}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+    networks:
+      - parrot-api-gateway-network
+      - parrot-tasks-network
+    depends_on:
+      - db-api-gateway
+      - redis
+      - tasks
+
+  db-api-gateway:
+    image: postgres:13.1-alpine
+    container_name: parrot-jira-api-gateway-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_API_GATEWAY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API_GATEWAY}
+      - POSTGRES_DB=${POSTGRES_DB_API_GATEWAY}
+    volumes:
+      - parrot-jira-api-gateway-db:/var/lib/postgresql/data
+    networks:
+      - parrot-api-gateway-network
 
 networks:
-  parrot-backend-network:
+  parrot-tasks-network:
     driver: bridge
   parrot-frontend-network:
+    driver: bridge
+  parrot-api-gateway-network:
     driver: bridge
 
 volumes:
   parrot-jira-redis-data:
-  parrot-jira-api-db:
+  parrot-jira-tasks-db:
+  parrot-jira-api-gateway-db:

@@ -5,6 +5,8 @@ import { Header } from './components/Header';
 import { CssBaseline, Container } from '@material-ui/core';
 
 import { TaskTracker } from './components/TaskTracker';
+import { SignUp } from './components/SignUp';
+import { SignIn } from './components/SignIn';
 
 export const App: React.FC = () => {
   return (
@@ -16,6 +18,8 @@ export const App: React.FC = () => {
             <Header />
             <Switch>
               <Route path="/" exact component={TaskTracker} />
+              <Route path="/sign-up" component={SignUp} />
+              <Route path="/sign-in" component={SignIn} />
             </Switch>
           </Router>
         </ErrorBoundary>

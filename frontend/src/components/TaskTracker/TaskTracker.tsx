@@ -1,5 +1,13 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+axios.defaults.withCredentials = true;
+
+// const api = axios.create({
+//   baseURL: '/api',
+//   responseType: 'json',
+//   timeout: 10000,
+// });
+
 import { AddTodo } from './Todo/AddTodo';
 import { Todo } from './Todo/Todo';
 
@@ -9,7 +17,7 @@ export const TaskTracker: React.FC = () => {
 
   const fetchTasks = async () => {
     try {
-      const { data } = await axios.get('/api/tasks/');
+      const { data } = await api.get('/tasks');
       setTasks(data);
     } catch (error) {
       console.log(error);
