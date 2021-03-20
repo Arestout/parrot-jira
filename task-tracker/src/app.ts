@@ -46,7 +46,7 @@ class App {
       this.app.use(cors({ origin: 'your.domain.com', credentials: true }));
     } else if (this.env === 'development') {
       this.app.use(morgan('dev', { stream }));
-      this.app.use(cors({ origin: true, credentials: true }));
+      this.app.use(cors({ origin: true }));
     }
 
     this.app.use(hpp());

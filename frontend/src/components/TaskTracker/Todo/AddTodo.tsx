@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FormControl, Container, Button, TextField } from '@material-ui/core';
 import { Add } from '@material-ui/icons';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
-import axios from 'axios';
+import { api } from '../../../api';
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -24,7 +24,7 @@ export const AddTodo: React.FC = ({ setTask }) => {
       const data = {
         description: todoText,
       };
-      const response = await axios.post('/api/tasks', data, {
+      const response = await api.post('/tasks', data, {
         timeout: 1000,
         withCredentials: true,
       });

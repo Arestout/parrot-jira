@@ -19,13 +19,13 @@ services:
     # stdin_open: true
     # tty: true
 
-  tasks:
+  task-tracker:
     build:
-      context: ./api
+      context: ./task-tracker
       dockerfile: Dockerfile.dev
     command: npm run dev
     volumes:
-      - ./api/src:/app/src
+      - ./task-tracker/src:/app/src
     environment:
       - NODE_ENV=development
     ports:
@@ -60,3 +60,12 @@ services:
   db-api-gateway:
     ports:
       - '5433:5432'
+
+  zookeeper:
+    ports:
+      - '2181:2181'
+
+  broker:
+    ports:
+      - '9092:9092'
+      - '9101:9101'
