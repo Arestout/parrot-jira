@@ -112,6 +112,40 @@ services:
     networks:
       - parrot-api-gateway-network
 
+  accounting:
+    build:
+      context: ./accounting
+      dockerfile: Dockerfile
+    container_name: parrot-jira-accounting
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT_ACCOUNTING}
+      - REDIS_HOST=redis
+      - POSTGRES_USER=${POSTGRES_USER_ACCOUNTING}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ACCOUNTING}
+      - POSTGRES_HOST=db-accounting
+      - POSTGRES_DB=${POSTGRES_DB_ACCOUNTING}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+    networks:
+      - parrot-api-gateway-network
+      - parrot-accounting-network
+      - parrot-kafka-network
+    depends_on:
+      - db-accounting
+
+  db-accounting:
+    image: postgres:13.1-alpine
+    container_name: parrot-jira-accounting-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_ACCOUNTING}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ACCOUNTING}
+      - POSTGRES_DB=${POSTGRES_DB_ACCOUNTING}
+    volumes:
+      - parrot-jira-accounting-db:/var/lib/postgresql/data
+    networks:
+      - parrot-accounting-network
+
   zookeeper:
     image: wurstmeister/zookeeper:latest
     ports:
@@ -171,9 +205,12 @@ networks:
     driver: bridge
   parrot-kafka-network:
     driver: bridge
+  parrot-accounting-network:
+    driver: bridge
 
 volumes:
   parrot-jira-redis-data:
   parrot-jira-tasks-db:
   parrot-jira-api-gateway-db:
   parrot-jira-kafka-data:
+  parrot-jira-accounting-db:

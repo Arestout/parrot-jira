@@ -60,3 +60,22 @@ services:
   db-api-gateway:
     ports:
       - '5433:5432'
+
+  accounting:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./accounting/src:/app/src
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3005:3005'
+      - '9231:9229'
+    stdin_open: true
+    tty: true
+
+  db-accounting:
+    ports:
+      - '5434:5432'

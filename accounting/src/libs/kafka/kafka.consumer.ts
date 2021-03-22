@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { UserService } from '../../resources/users/user.service';
 import { UserRepository } from '../../resources/users/user.repository';
 import { userHandler } from './handlers/user.handler';
+import { taskHandler } from './handlers/task.handler';
 
 // Test implementation
 // TODO refactor
@@ -12,7 +13,10 @@ const userService = new UserService(userRepository);
 
 export class KafkaConsumer implements IKafkaConsumer {
   protected consumer: Consumer;
-  private handlers = new Map([['users', userHandler]]);
+  private handlers = new Map<string, any>([
+    ['users', userHandler],
+    ['tasks', taskHandler],
+  ]);
 
   public constructor(consumer: Consumer) {
     this.consumer = consumer;

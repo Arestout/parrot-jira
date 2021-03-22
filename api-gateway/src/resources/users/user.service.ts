@@ -10,7 +10,7 @@ import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 export class UserService {
   protected userRepository: IUserRepository;
   protected kafkaProducer: IKafkaProducer;
-  private topic = 'topic-test';
+  private topic = 'user-topic';
 
   constructor(repository: IUserRepository, kafkaProducer: IKafkaProducer) {
     this.userRepository = repository;

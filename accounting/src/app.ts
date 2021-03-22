@@ -66,12 +66,15 @@ class App {
   }
 
   private initializeKafkaConsumer() {
-    const consumer: Consumer = kafka.consumer({ groupId: 'task-tracker-group' });
+    const consumer: Consumer = kafka.consumer({ groupId: 'accounting-group' });
     const kafkaConsumer = new KafkaConsumer(consumer);
 
     (async function () {
       await kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true });
       await kafkaConsumer.receiveMessages('users');
+
+      // await kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true });
+      // await kafkaConsumer.receiveMessages('tasks');
     })();
   }
   private initializeErrorHandling() {
