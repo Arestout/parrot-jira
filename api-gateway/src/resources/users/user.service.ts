@@ -1,13 +1,20 @@
-import { IUserRepository } from './interfaces/userRepository.interface';
 import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { Transaction } from 'kafkajs';
+
+import { IUserRepository } from './interfaces/userRepository.interface';
 import { CreateUserDto } from './user.dto';
 import { UserDto } from './interfaces/user.interface';
+import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 
 export class UserService {
   protected userRepository: IUserRepository;
+  protected kafkaProducer: IKafkaProducer;
+  private topic = 'topic-test';
 
-  constructor(repository: IUserRepository) {
+  constructor(repository: IUserRepository, kafkaProducer: IKafkaProducer) {
     this.userRepository = repository;
+    this.kafkaProducer = kafkaProducer;
   }
 
   public async findAllUser(): Promise<UserDto[]> {
@@ -23,12 +30,26 @@ export class UserService {
   }
 
   public async createUser(userData: CreateUserDto): Promise<UserDto> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
+    const transaction: Transaction = await this.kafkaProducer.getTransaction();
 
-    // Stream user data
+    try {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
 
-    return createUserData;
+      const event = {
+        key: 'UserCreated',
+        value: JSON.stringify({ event_id: uuidv4(), ...createUserData }),
+      };
+
+      await transaction.send({ topic: this.topic, messages: [event] });
+      await transaction.commit();
+
+      return createUserData;
+    } catch (error) {
+      console.log(error);
+      await transaction.abort();
+      throw error;
+    }
   }
 
   public async updateUser(userId: string, userData: UserDto): Promise<UserDto> {
@@ -36,13 +57,26 @@ export class UserService {
     await this.userRepository.update(userId, { ...userData, password: hashedPassword });
 
     const updateUser: UserDto = await this.userRepository.find(userId);
+
+    const event = {
+      key: 'UserUpdated',
+      value: JSON.stringify({ event_id: uuidv4(), ...updateUser }),
+    };
+    await this.kafkaProducer.sendMessage(this.topic, [event]);
+
     return updateUser;
   }
 
   public async deleteUserData(userId: string): Promise<UserDto> {
     const findUser: UserDto = await this.userRepository.find(userId);
 
-    await this.userRepository.delete(userId);
+    const deletedUser: UserDto = await this.userRepository.delete(userId);
+
+    const event = {
+      key: 'UserDeleted',
+      value: JSON.stringify({ event_id: uuidv4(), ...deletedUser }),
+    };
+    await this.kafkaProducer.sendMessage(this.topic, [event]);
 
     return findUser;
   }

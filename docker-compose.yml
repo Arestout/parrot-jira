@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
     networks:
       - parrot-tasks-network
-      - parrot-api-gateway-network
+      - parrot-kafka-network
     depends_on:
       - db-tasks
       - redis
@@ -93,6 +93,8 @@ services:
       - task-tracker
     networks:
       - parrot-api-gateway-network
+      - parrot-tasks-network
+      - parrot-kafka-network
     depends_on:
       - db-api-gateway
       - redis
@@ -111,44 +113,54 @@ services:
       - parrot-api-gateway-network
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:6.1.0
-    hostname: zookeeper
-    container_name: parrot-jira-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - '2181:2181'
     networks:
-      - parrot-tasks-network
-      - parrot-api-gateway-network
+      - parrot-kafka-network
 
-  broker:
-    image: confluentinc/cp-server:6.1.0
-    hostname: broker
-    container_name: parrot-jira-broker
-    depends_on:
+  kafka:
+    image: wurstmeister/kafka:2.13-2.7.0
+    ports:
+      - '9092:9092'
+    links:
       - zookeeper
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
-      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
-      CONFLUENT_METRICS_ENABLE: 'true'
-      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_DELETE_TOPIC_ENABLE=true
+      - KAFKA_CREATE_TOPICS=topic-test:1:1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - parrot-jira-kafka-data:/var/lib/kafka/data
     networks:
-      - parrot-tasks-network
-      - parrot-api-gateway-network
+      - parrot-kafka-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - '3004:8080'
+    restart: unless-stopped
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=localhost:2181
+    networks:
+      - parrot-kafka-network
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    ports:
+      - 9100:9000
+    environment:
+      - KAFKA_BROKERCONNECT=kafka:9092
+      - JVM_OPTS=-Xms32M -Xmx64M
+    depends_on:
+      - kafka
+    networks:
+      - parrot-kafka-network
 
 networks:
   parrot-tasks-network:
@@ -157,8 +169,11 @@ networks:
     driver: bridge
   parrot-api-gateway-network:
     driver: bridge
+  parrot-kafka-network:
+    driver: bridge
 
 volumes:
   parrot-jira-redis-data:
   parrot-jira-tasks-db:
   parrot-jira-api-gateway-db:
+  parrot-jira-kafka-data:

@@ -1,5 +1,4 @@
 import { UserDto } from './interfaces/user.interface';
-import { HttpException } from '../../utils/HttpException';
 import DB from '../../database/index';
 import { isEmpty } from '../../utils/util';
 import { IUserRepository } from './interfaces/userRepository.interface';
@@ -14,27 +13,24 @@ export class UserRepository implements IUserRepository {
   }
 
   public async find(userId: string): Promise<UserDto> {
-    if (isEmpty(userId)) throw new HttpException(400, "You're not userId");
+    if (isEmpty(userId)) throw new Error("You're not userId");
 
     const findUser: UserDto = await this.users.findByPk(userId);
-    if (!findUser) throw new HttpException(409, "You're not user");
+    if (!findUser) throw new Error("You're not user");
 
     return findUser;
   }
 
   public async create(userData: CreateUserDto): Promise<UserDto> {
-    if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
+    if (isEmpty(userData)) throw new Error("You're not userData");
 
     const transaction = await DB.sequelize.transaction();
 
     try {
       const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
-      if (findUser) throw new HttpException(409, `Your email ${userData.email} already exists`);
+      if (findUser) throw new Error(`Your email ${userData.email} already exists`);
 
-      const createUserData: UserDto = await this.users.create(userData).then(userData => {
-        return userData.get({ plain: true });
-      });
-      delete createUserData.password;
+      const createUserData: UserDto = await this.users.create(userData);
 
       await transaction.commit();
       return createUserData;
@@ -44,18 +40,18 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  public async update(userId: string, userData: UserDto): Promise<UserDto> {
-    if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
+  public async update(userData: UserDto): Promise<UserDto> {
+    if (isEmpty(userData)) throw new Error("You're not userData");
 
     const transaction = await DB.sequelize.transaction();
 
     try {
-      const findUser: UserDto = await this.users.findByPk(userId);
-      if (!findUser) throw new HttpException(409, "You're not user");
+      const findUser: UserDto = await this.users.findByPk(userData.public_id);
+      if (!findUser) throw new Error("You're not user");
 
-      await this.users.update(userData, { where: { id: userId } });
+      await this.users.update(userData, { where: { public_id: userData.public_id } });
 
-      const updateUser: UserDto = await this.users.findByPk(userId);
+      const updateUser: UserDto = await this.users.findByPk(userData.public_id);
 
       await transaction.commit();
       return updateUser;
@@ -66,15 +62,15 @@ export class UserRepository implements IUserRepository {
   }
 
   public async delete(userId: string): Promise<UserDto> {
-    if (isEmpty(userId)) throw new HttpException(400, "You're not userId");
+    if (isEmpty(userId)) throw new Error("You're not userId");
 
     const transaction = await DB.sequelize.transaction();
 
     try {
       const findUser: UserDto = await this.users.findByPk(userId);
-      if (!findUser) throw new HttpException(409, "You're not user");
+      if (!findUser) throw new Error("You're not user");
 
-      await this.users.destroy({ where: { id: userId } });
+      await this.users.destroy({ where: { public_id: userId } });
 
       await transaction.commit();
       return findUser;
