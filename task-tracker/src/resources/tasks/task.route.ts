@@ -16,6 +16,7 @@ export class TaskRoute implements Routes {
     this.router.get(`${this.path}/`, this.blockController.getAll);
     this.router.get(`${this.path}/:id`, this.blockController.getById);
     this.router.post(`${this.path}/`, this.blockController.create);
+    this.router.put(`${this.path}/assign`, this.blockController.assign);
     this.router.put(`${this.path}/:id`, this.blockController.update);
   }
 }

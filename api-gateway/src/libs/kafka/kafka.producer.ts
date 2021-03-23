@@ -1,4 +1,5 @@
 import { CompressionTypes, Message, Producer, Transaction } from 'kafkajs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { kafka } from './kafka.config';
 import { IKafkaProducer } from './kafka.interface';
@@ -14,7 +15,7 @@ export class KafkaProducer implements IKafkaProducer {
     const producer = kafka.producer({
       maxInFlightRequests: 1,
       idempotent: true,
-      transactionalId: 'user-api-gateway',
+      transactionalId: uuidv4(),
     });
 
     this.producer = producer;

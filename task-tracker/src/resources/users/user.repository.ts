@@ -12,6 +12,16 @@ export class UserRepository implements IUserRepository {
     return allUser;
   }
 
+  public async allWhere<T>(key: string, value: T): Promise<UserDto[]> {
+    const tasks: UserDto[] = await this.users.findAll({
+      where: {
+        [key]: value,
+      },
+    });
+
+    return tasks;
+  }
+
   public async find(userId: string): Promise<UserDto> {
     if (isEmpty(userId)) throw new Error("You're not userId");
 

@@ -1,8 +1,10 @@
-import { TaskDTO } from './task.interface';
+import { TaskDto } from './task.interface';
 
 export interface ITaskRepository {
-  getAll(page: number): Promise<TaskDTO[]>;
-  getById(id: string): Promise<TaskDTO>;
-  create(taskDTO: TaskDTO): Promise<TaskDTO>;
-  findOneAndUpdate(taskDTO: TaskDTO): Promise<TaskDTO>;
+  all(): Promise<TaskDto[]>;
+  allWhere<T>(key: string, value: T): Promise<TaskDto[]>;
+  allRandom(): Promise<TaskDto[]>;
+  get(id: string): Promise<TaskDto>;
+  create(taskDto: TaskDto): Promise<TaskDto>;
+  findOneAndUpdate(taskDto: TaskDto): Promise<TaskDto>;
 }
