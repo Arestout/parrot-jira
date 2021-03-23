@@ -36,11 +36,11 @@ export class UserService {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
 
+      const encodedMessage = await this.kafkaProducer.encode({ event_id: uuidv4(), ...createUserData });
       const event = {
         key: 'UserCreated',
-        value: JSON.stringify({ event_id: uuidv4(), ...createUserData }),
+        value: encodedMessage,
       };
-
       await transaction.send({ topic: this.topic, messages: [event] });
       await transaction.commit();
 
@@ -60,7 +60,7 @@ export class UserService {
 
     const event = {
       key: 'UserUpdated',
-      value: JSON.stringify({ event_id: uuidv4(), ...updateUser }),
+      value: { event_id: uuidv4(), ...updateUser },
     };
     await this.kafkaProducer.sendMessage(this.topic, [event]);
 
@@ -74,7 +74,7 @@ export class UserService {
 
     const event = {
       key: 'UserDeleted',
-      value: JSON.stringify({ event_id: uuidv4(), ...deletedUser }),
+      value: { event_id: uuidv4(), ...deletedUser },
     };
     await this.kafkaProducer.sendMessage(this.topic, [event]);
 

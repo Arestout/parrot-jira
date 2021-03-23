@@ -165,9 +165,26 @@ services:
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_DELETE_TOPIC_ENABLE=true
       - KAFKA_CREATE_TOPICS=topic-test:1:1
+      - KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS=kafka:29092
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - parrot-jira-kafka-data:/var/lib/kafka/data
+    networks:
+      - parrot-kafka-network
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:6.1.1
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - '8081:8081'
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
     networks:
       - parrot-kafka-network
 
