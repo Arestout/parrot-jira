@@ -4,10 +4,9 @@ import { UserDto } from './interfaces/user.interface';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
 import { KafkaProducer } from '../../libs/kafka/kafka.producer';
-import { userSchema } from './../../libs/kafka/schemas/user.schema';
 
 const userRepository = new UserRepository();
-const kafkaProducer = new KafkaProducer(userSchema);
+const kafkaProducer = new KafkaProducer();
 export class UserController {
   public userService = new UserService(userRepository, kafkaProducer);
 

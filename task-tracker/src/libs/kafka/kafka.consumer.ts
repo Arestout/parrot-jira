@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { UserService } from '../../resources/users/user.service';
 import { UserRepository } from '../../resources/users/user.repository';
 import { userHandler } from './handlers/user.handler';
+import { registry } from './kafka.config';
 
 // Test implementation
 // TODO refactor
@@ -27,9 +28,15 @@ export class KafkaConsumer implements IKafkaConsumer {
     await this.consumer.run({
       eachMessage: async ({ message }) => {
         try {
+          const decodedMessage = {
+            ...message,
+            value: await registry.decode(message.value),
+          };
+
           const messageHandler = this.handlers.get(handler);
-          await messageHandler(userService, message);
+          await messageHandler(userService, decodedMessage);
         } catch (error) {
+          // Maybe create Error topic ?
           logger.error(error);
           throw error;
         }

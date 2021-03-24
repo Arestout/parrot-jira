@@ -1,35 +1,45 @@
-export const userSchema = `
+export const createdUserSchema = `
+  {
+    "type": "record",
+    "name": "UserCreated",
+    "namespace": "users",
+    "fields": [
+      { "name": "event_id", "type": "string" },
+      { "name": "public_id", "type": "string" },
+      { "name": "fullName", "type": "string" },
+      { "name": "email", "type": "string" },
+      { "name": "role", "type": "string" },
+      { "name": "slack", "type": "string" },
+      { "name": "mobile", "type": "string" }
+    ]
+  }
+`;
+
+export const updatedUserSchema = `
+  {
+    "type": "record",
+    "name": "UserUpdated",
+    "namespace": "users",
+    "fields": [
+      { "name": "event_id", "type": "string" },
+      { "name": "public_id", "type": "string" },
+      { "name": "fullName", "type": "string" },
+      { "name": "email", "type": "string" },
+      { "name": "role", "type": "string" },
+      { "name": "slack", "type": "string" },
+      { "name": "mobile", "type": "string" }
+    ]
+  }
+`;
+
+export const deletedUserSchema = `
 {
-  "definitions" : {
-    "record:User" : {
-      "type" : "object",
-      "required" : [ "event_id","public_id", "fullName", "email", "role", "slack", "mobile" ],
-      "additionalProperties" : false,
-      "properties" : {
-        "event_id": {
-          "type" : "string"
-        },
-        "public_id": {
-          "type" : "string"
-        },
-        "fullName" : {
-          "type" : "string"
-        },
-        "email" : {
-          "type" : "string"
-        },
-        "role" : {
-          "type" : "string"
-        },
-        "slack" : {
-          "type" : "string"
-        },
-        "mobile" : {
-          "type" : "string"
-        }
-      }
-    }
-  },
-  "$ref" : "#/definitions/record:User"
+  "type": "record",
+  "name": "UserDeleted",
+  "namespace": "users",
+  "fields": [
+    { "name": "event_id", "type": "string" },
+    { "name": "public_id", "type": "string" },
+  ]
 }
 `;

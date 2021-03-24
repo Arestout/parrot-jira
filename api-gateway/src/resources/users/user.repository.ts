@@ -35,6 +35,7 @@ export class UserRepository implements IUserRepository {
         return userData.get({ plain: true });
       });
       delete createUserData.password;
+      delete createUserData.id;
 
       await transaction.commit();
       return createUserData;

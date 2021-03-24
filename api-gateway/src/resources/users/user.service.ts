@@ -6,7 +6,7 @@ import { IUserRepository } from './interfaces/userRepository.interface';
 import { CreateUserDto } from './user.dto';
 import { UserDto } from './interfaces/user.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
-
+import { createdUserSchema, updatedUserSchema, deletedUserSchema } from './../../libs/kafka/schemas/user.schema';
 export class UserService {
   protected userRepository: IUserRepository;
   protected kafkaProducer: IKafkaProducer;
@@ -30,13 +30,17 @@ export class UserService {
   }
 
   public async createUser(userData: CreateUserDto): Promise<UserDto> {
+    if (!this.kafkaProducer.isReady) {
+      await this.kafkaProducer.init();
+    }
+
     const transaction: Transaction = await this.kafkaProducer.getTransaction();
 
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
 
-      const encodedMessage = await this.kafkaProducer.encode({ event_id: uuidv4(), ...createUserData });
+      const encodedMessage = await this.kafkaProducer.encode(createdUserSchema, { event_id: uuidv4(), ...createUserData });
       const event = {
         key: 'UserCreated',
         value: encodedMessage,
@@ -58,9 +62,10 @@ export class UserService {
 
     const updateUser: UserDto = await this.userRepository.find(userId);
 
+    const encodedMessage = await this.kafkaProducer.encode(updatedUserSchema, { event_id: uuidv4(), ...updateUser });
     const event = {
       key: 'UserUpdated',
-      value: { event_id: uuidv4(), ...updateUser },
+      value: encodedMessage,
     };
     await this.kafkaProducer.sendMessage(this.topic, [event]);
 
@@ -72,9 +77,10 @@ export class UserService {
 
     const deletedUser: UserDto = await this.userRepository.delete(userId);
 
+    const encodedMessage = await this.kafkaProducer.encode(deletedUserSchema, { event_id: uuidv4(), public_id: deletedUser.public_id });
     const event = {
       key: 'UserDeleted',
-      value: { event_id: uuidv4(), ...deletedUser },
+      value: encodedMessage,
     };
     await this.kafkaProducer.sendMessage(this.topic, [event]);
 

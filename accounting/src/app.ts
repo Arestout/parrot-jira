@@ -73,8 +73,8 @@ class App {
       await kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true });
       await kafkaConsumer.receiveMessages('users');
 
-      // await kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true });
-      // await kafkaConsumer.receiveMessages('tasks');
+      await kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true });
+      await kafkaConsumer.receiveMessages('tasks');
     })();
   }
   private initializeErrorHandling() {

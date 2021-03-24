@@ -7,23 +7,18 @@ import { IKafkaProducer } from './kafka.interface';
 export class KafkaProducer implements IKafkaProducer {
   protected producer: Producer;
   protected registerId: number;
+  public isReady = false;
 
-  public constructor(schema) {
-    this.init(schema);
-  }
-
-  private async init(schema): Promise<void> {
+  public async init(): Promise<void> {
     const producer = kafka.producer({
       maxInFlightRequests: 1,
       idempotent: true,
       transactionalId: uuidv4(),
     });
+
     this.producer = producer;
-
-    const { id } = await registry.register(schema);
-    this.registerId = id;
-
     await this.producer.connect();
+    this.isReady = true;
   }
 
   public async getTransaction(): Promise<Transaction> {
@@ -32,9 +27,10 @@ export class KafkaProducer implements IKafkaProducer {
     return transaction;
   }
 
-  public async encode<T>(message: T): Promise<Buffer> {
+  public async encode<T>(schema: string, message: T): Promise<Buffer> {
     try {
-      const outgoingMessage = await registry.encode(this.registerId, message);
+      const { id } = await registry.register({ type: 'AVRO', schema });
+      const outgoingMessage = await registry.encode(id, message);
 
       return outgoingMessage;
     } catch (error) {

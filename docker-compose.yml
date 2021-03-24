@@ -146,8 +146,52 @@ services:
     networks:
       - parrot-accounting-network
 
+  # zookeeper:
+  #   image: wurstmeister/zookeeper:latest
+  #   environment:
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #   ports:
+  #     - '2181:2181'
+  #   networks:
+  #     - parrot-kafka-network
+
+  # kafka:
+  #   image: wurstmeister/kafka:2.13-2.7.0
+  #   ports:
+  #     - '9092:9092'
+  #     - '29092:29092'
+  #   links:
+  #     - zookeeper
+  #   environment:
+  #     - KAFKA_ADVERTISED_HOST_NAME=localhost
+  #     - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+  #     - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+  #     - KAFKA_DELETE_TOPIC_ENABLE=true
+  #     - KAFKA_CREATE_TOPICS=topic-test:1:1
+  #     - KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=schema-registry:8081
+  #     - CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS=kafka:29092
+  #     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     - KAFKA_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+  #     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+  #     # - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     # - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+  #     - ALLOW_PLAINTEXT_LISTENER=yes
+  #     # - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT://kafka:29092
+
+  #   #       KAFKA_LISTENERS: LISTENER_BOB://kafka0:29092,LISTENER_FRED://localhost:9092
+  #   # KAFKA_ADVERTISED_LISTENERS: LISTENER_BOB://kafka0:29092,LISTENER_FRED://localhost:9092
+  #   # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_BOB:PLAINTEXT,LISTENER_FRED:PLAINTEXT
+  #   # KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_BOB
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - parrot-jira-kafka-data:/var/lib/kafka/data
+  #   networks:
+  #     - parrot-kafka-network
+
   zookeeper:
     image: wurstmeister/zookeeper:latest
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
     ports:
       - '2181:2181'
     networks:
@@ -157,6 +201,7 @@ services:
     image: wurstmeister/kafka:2.13-2.7.0
     ports:
       - '9092:9092'
+      - '29092:29092'
     links:
       - zookeeper
     environment:
@@ -183,8 +228,10 @@ services:
       - '8081:8081'
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
-      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+
     networks:
       - parrot-kafka-network
 
@@ -197,21 +244,39 @@ services:
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=localhost:2181
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      - KAFKA_CLUSTERS_0_SCHEMAREGISTRY=http://schema-registry:8081
     networks:
       - parrot-kafka-network
 
-  kafdrop:
-    image: obsidiandynamics/kafdrop
+  schema-registry-ui:
+    image: landoop/schema-registry-ui:latest
+    container_name: schema-registry-ui
+    hostname: schema-registry-ui
     ports:
-      - 9100:9000
+      - '8000:8000'
     environment:
-      - KAFKA_BROKERCONNECT=kafka:9092
-      - JVM_OPTS=-Xms32M -Xmx64M
+      SCHEMAREGISTRY_URL: 'http://schema-registry:8081'
+      PROXY: 'true'
+      ALLOW_GLOBAL: 'true'
+      ALLOW_TRANSITIVE: 'true'
+      ALLOW_DELETION: 'true'
     depends_on:
-      - kafka
+      - schema-registry
     networks:
       - parrot-kafka-network
+
+  # kafdrop:
+  #   image: obsidiandynamics/kafdrop
+  #   ports:
+  #     - 9100:9000
+  #   environment:
+  #     - KAFKA_BROKERCONNECT=kafka:9092
+  #     - JVM_OPTS=-Xms32M -Xmx64M
+  #   depends_on:
+  #     - kafka
+  #   networks:
+  #     - parrot-kafka-network
 
 networks:
   parrot-tasks-network:
