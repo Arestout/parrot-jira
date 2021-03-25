@@ -57,11 +57,20 @@ export class TaskController {
 
   public assign = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const headerToken = req.headers.authorization;
-      // get role and check if manager
       await this.taskService.assign();
 
       res.status(200).json('Tasks have been assigned');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getDevelopersTasks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const tasks: TaskDto[] = await this.taskService.allWhere('public_id', id);
+
+      res.status(200).json(tasks);
     } catch (error) {
       next(error);
     }

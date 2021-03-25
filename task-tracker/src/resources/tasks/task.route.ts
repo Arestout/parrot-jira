@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { Routes } from '../../interfaces/routes.interface';
+import { checkRole } from '../../middlewares/authZ.middleware';
 import { TaskController } from './task.controller';
 
 export class TaskRoute implements Routes {
@@ -16,7 +17,8 @@ export class TaskRoute implements Routes {
     this.router.get(`${this.path}/`, this.blockController.getAll);
     this.router.get(`${this.path}/:id`, this.blockController.getById);
     this.router.post(`${this.path}/`, this.blockController.create);
-    this.router.put(`${this.path}/assign`, this.blockController.assign);
+    this.router.put(`${this.path}/assign`, [checkRole('manager')], this.blockController.assign);
     this.router.put(`${this.path}/:id`, this.blockController.update);
+    this.router.put(`${this.path}/developer/:id`, [checkRole('developer')], this.blockController.getDevelopersTasks);
   }
 }

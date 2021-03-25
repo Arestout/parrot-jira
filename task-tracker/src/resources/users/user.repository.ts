@@ -25,7 +25,7 @@ export class UserRepository implements IUserRepository {
   public async find(userId: string): Promise<UserDto> {
     if (isEmpty(userId)) throw new Error("You're not userId");
 
-    const findUser: UserDto = await this.users.findByPk(userId);
+    const findUser: UserDto = await this.users.findByPk(userId, { raw: true });
     if (!findUser) throw new Error("You're not user");
 
     return findUser;
@@ -88,5 +88,16 @@ export class UserRepository implements IUserRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async checkRole(role: string, id: string): Promise<boolean> {
+    const findUser: UserDto = await this.users.findOne({ where: { public_id: id }, raw: true });
+    if (!findUser) throw new Error("You're not user");
+
+    if (findUser.role === role) {
+      return true;
+    }
+
+    return false;
   }
 }
