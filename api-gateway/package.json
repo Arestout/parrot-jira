@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@kafkajs/confluent-schema-registry": "^2.0.0",
+    "async-mutex": "^0.3.1",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.3.2",
