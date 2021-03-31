@@ -8,11 +8,12 @@ const userRepository = new UserRepository();
 
 export const checkRole = (role: string): RequestHandler => {
   return async (req, res, next) => {
-    const headerToken = req.headers.authorization.replace('Bearer ', '');
-    const decodedToken = jwt.decode(headerToken, { complete: true });
+    const headerToken = req.headers.authorization;
+    const decodedToken = jwt.decode(headerToken.replace('Bearer ', ''), { complete: true });
     const { id } = decodedToken.payload;
 
     const findUser: UserDto = await userRepository.find(id);
+    console.log('findUser: ', findUser);
 
     if (findUser.role !== role) {
       return next(new HttpException(400, 'You are not manger'));

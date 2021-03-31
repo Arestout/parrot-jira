@@ -7,8 +7,7 @@ export type TaskCreationAttributes = Optional<TaskDto, 'id' | 'value'>;
 
 export class TaskModel extends Model<TaskDto, TaskCreationAttributes> implements TaskDto {
   public id: string;
-  public description: string;
-  public completed: boolean;
+  public value: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -20,11 +19,12 @@ export default function (sequelize: Sequelize): typeof TaskModel {
       id: {
         primaryKey: true,
         type: DataTypes.UUID,
-        defaultValue: DataTypes.random,
       },
       value: {
         type: DataTypes.INTEGER,
-        defaultValue: random(10, 70),
+        defaultValue: function () {
+          return random(10, 70);
+        },
       },
     },
     {

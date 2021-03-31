@@ -4,7 +4,6 @@ export const createdUserSchema = `
     "name": "UserCreated",
     "namespace": "users",
     "fields": [
-      { "name": "event_id", "type": "string" },
       { "name": "public_id", "type": "string" },
       { "name": "fullName", "type": "string" },
       { "name": "email", "type": "string" },
@@ -21,7 +20,6 @@ export const updatedUserSchema = `
     "name": "UserUpdated",
     "namespace": "users",
     "fields": [
-      { "name": "event_id", "type": "string" },
       { "name": "public_id", "type": "string" },
       { "name": "fullName", "type": "string" },
       { "name": "email", "type": "string" },
@@ -38,7 +36,6 @@ export const deletedUserSchema = `
   "name": "UserDeleted",
   "namespace": "users",
   "fields": [
-    { "name": "event_id", "type": "string" },
     { "name": "public_id", "type": "string" },
   ]
 }

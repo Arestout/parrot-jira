@@ -125,6 +125,9 @@ export function Header() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  const userString = window.localStorage.getItem('user');
+  const user = userString && JSON.parse(userString);
+
   const menuId = 'primary-search-account-menu';
   const renderMenu = (
     <Menu
@@ -224,6 +227,18 @@ export function Header() {
               Sign up
             </Typography>
           </Link>
+          {user && user.role === 'developer' && (
+            <Link
+              to="/my-tasks"
+              component={RouterLink}
+              className={classes.menuLink}
+              variant="body2"
+            >
+              <Typography variant="h6" noWrap>
+                My tasks
+              </Typography>
+            </Link>
+          )}
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton

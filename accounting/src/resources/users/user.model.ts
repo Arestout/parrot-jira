@@ -8,6 +8,8 @@ export class UserModel extends Model<UserDto, UserCreationAttributes> implements
   public public_id: string;
   public fullName: string;
   public email: string;
+  public slack: string;
+  public mobile: string;
   public role: string;
 
   public readonly createdAt!: Date;

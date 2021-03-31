@@ -24,10 +24,10 @@ class App {
     this.env = NODE_ENV;
 
     this.connectToDatabase();
+    this.initializeKafkaConsumer();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
-    this.initializeKafkaConsumer();
   }
 
   public listen() {
@@ -70,11 +70,11 @@ class App {
     const kafkaConsumer = new KafkaConsumer(consumer);
 
     (async function () {
-      await kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true });
-      await kafkaConsumer.receiveMessages('users');
-
-      await kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true });
-      await kafkaConsumer.receiveMessages('tasks');
+      await Promise.all([
+        kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true }),
+        kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true }),
+      ]);
+      await kafkaConsumer.receiveMessages();
     })();
   }
   private initializeErrorHandling() {

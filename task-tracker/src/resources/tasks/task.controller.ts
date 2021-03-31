@@ -5,6 +5,7 @@ import { TaskDto } from './interfaces/task.interface';
 import { CreateTaskDto } from './task.dto';
 import { UserRepository } from '../users/user.repository';
 import { KafkaProducer } from '../../libs/kafka/kafka.producer';
+import jwt from 'jsonwebtoken';
 
 const taskRepository = new TaskRepository();
 const userRepository = new UserRepository();
@@ -25,7 +26,7 @@ export class TaskController {
   public getById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const task: TaskDto = await this.taskService.get(id);
+      const task: TaskDto = await this.taskService.find(id);
 
       res.status(200).json(task);
     } catch (error) {
@@ -44,10 +45,14 @@ export class TaskController {
     }
   };
 
-  public update = async (req: Request, res: Response, next: NextFunction) => {
+  public complete = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const headerToken = req.headers.authorization;
+      const decodedToken = jwt.decode(headerToken.replace('Bearer ', ''), { complete: true });
+      const { id } = decodedToken.payload;
       const { body } = req;
-      const task: TaskDto = await this.taskService.update(body);
+
+      const task: TaskDto = await this.taskService.complete(id, body);
 
       res.status(200).json(task);
     } catch (error) {
@@ -68,7 +73,7 @@ export class TaskController {
   public getDevelopersTasks = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const tasks: TaskDto[] = await this.taskService.allWhere('public_id', id);
+      const tasks: TaskDto[] = await this.taskService.allWhere('developer_id', id);
 
       res.status(200).json(tasks);
     } catch (error) {

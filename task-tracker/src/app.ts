@@ -71,7 +71,6 @@ class App {
 
     (async function () {
       await kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true });
-      await kafkaConsumer.receiveMessages('users');
     })();
   }
   private initializeErrorHandling() {

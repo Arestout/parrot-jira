@@ -4,12 +4,25 @@ import { v4 as uuidv4 } from 'uuid';
 import { kafka, registry } from './kafka.config';
 import { IKafkaProducer } from './kafka.interface';
 
+// TODO move encode and getTransaction to a separate class
+
 export class KafkaProducer implements IKafkaProducer {
   protected producer: Producer;
-  protected registerId: number;
-  public isReady = false;
+  private connectionPromise: Promise<void> | null;
 
-  public async init(): Promise<void> {
+  constructor() {
+    this.connectionPromise = null;
+  }
+
+  private async connect() {
+    if (!this.connectionPromise) {
+      this.connectionPromise = this.init();
+    }
+
+    return this.connectionPromise;
+  }
+
+  private async init(): Promise<void> {
     const producer = kafka.producer({
       maxInFlightRequests: 1,
       idempotent: true,
@@ -18,7 +31,6 @@ export class KafkaProducer implements IKafkaProducer {
 
     this.producer = producer;
     await this.producer.connect();
-    this.isReady = true;
   }
 
   public async getTransaction(): Promise<Transaction> {
@@ -40,6 +52,7 @@ export class KafkaProducer implements IKafkaProducer {
 
   public async sendMessage(topic: string, messages: Message[]): Promise<void> {
     try {
+      await this.connect();
       await this.producer.send({
         topic,
         messages,

@@ -18,6 +18,7 @@ export class TaskRepository implements ITaskRepository {
       where: {
         [key]: value,
       },
+      raw: true,
     });
 
     return tasks;
@@ -29,13 +30,14 @@ export class TaskRepository implements ITaskRepository {
         completed: false,
       },
       order: DB.Sequelize.literal('random()'),
+      raw: true,
     });
 
     return tasks;
   }
 
-  public async get(id: string): Promise<TaskDto> {
-    const task = await this.tasks.findOne({
+  public async find(id: string): Promise<TaskDto> {
+    const task: TaskDto = await this.tasks.findOne({
       where: { id },
     });
 
@@ -47,25 +49,42 @@ export class TaskRepository implements ITaskRepository {
   }
 
   public async create(taskDto: Partial<TaskDto>): Promise<TaskDto> {
-    const task = await this.tasks.create({ ...taskDto });
+    const task: TaskDto = await this.tasks.create(taskDto).then(taskData => {
+      return taskData.get({ plain: true });
+    });
 
     return task;
   }
 
-  public async findOneAndUpdate(taskDto: TaskDto): Promise<TaskDto> {
+  public async complete(id: string, taskDto: TaskDto): Promise<TaskDto> {
     const transaction = await DB.sequelize.transaction();
     try {
-      const findTask = await this.tasks.findByPk(taskDto.id);
+      const findTask: TaskDto = await this.tasks.findByPk(taskDto.id, { raw: true });
       if (isEmpty(findTask)) throw new HttpException(404, 'Task was not found');
+      if (findTask.developerId !== id) throw new HttpException(401, 'Unauthorized');
 
       await this.tasks.update({ ...taskDto }, { where: { id: taskDto.id } });
 
-      const updatedTask = await this.tasks.findByPk(taskDto.id);
+      const updatedTask: TaskDto = await this.tasks.findByPk(taskDto.id, { raw: true });
 
       await transaction.commit();
       return updatedTask;
     } catch (error) {
       await transaction.rollback();
+      throw error;
+    }
+  }
+
+  public async updateMany(tasks: TaskDto[]): Promise<void> {
+    const transaction = await DB.sequelize.transaction();
+
+    try {
+      const taskPromises = tasks.map(task => this.tasks.update({ ...task }, { where: { id: task.id } }));
+      await Promise.all(taskPromises);
+
+      transaction.commit();
+    } catch (error) {
+      transaction.rollback();
       throw error;
     }
   }

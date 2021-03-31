@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Mutex } from 'async-mutex';
-import jwt from 'jsonwebtoken';
 
 import { UserDto } from '../users/interfaces/user.interface';
 import { TaskDto } from './interfaces/task.interface';
@@ -8,7 +7,8 @@ import { ITaskRepository } from './interfaces/taskRepository.interface';
 import { IUserRepository } from '../users/interfaces/userRepository.interface';
 import { random } from '../../utils/random';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
-import { createdTaskSchema, assignedTaskSchema, changedTaskStatusSchema } from './../../libs/kafka/schemas/task.schema';
+import { createdTaskSchema, assignedTaskSchema, completeTaskSchema } from './../../libs/kafka/schemas/task.schema';
+import { Message } from 'kafkajs';
 
 export class TaskService {
   protected taskRepository: ITaskRepository;
@@ -35,8 +35,8 @@ export class TaskService {
     return tasks;
   }
 
-  public async get(id: string): Promise<TaskDto> {
-    const task = await this.taskRepository.get(id);
+  public async find(id: string): Promise<TaskDto> {
+    const task = await this.taskRepository.find(id);
 
     return task;
   }
@@ -47,10 +47,17 @@ export class TaskService {
     try {
       const task: TaskDto = await this.taskRepository.create(taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { event_id: uuidv4(), id: task.id });
+      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { id: task.id });
       const event = {
         key: 'TaskCreated',
         value: encodedMessage,
+        headers: {
+          event_id: uuidv4(),
+          event_version: '1',
+          event_name: 'TaskCreated',
+          event_time: Date.now().toString(),
+          producer: 'task-service',
+        },
       };
       await this.kafkaProducer.sendMessage(this.topic, [event]);
 
@@ -60,19 +67,26 @@ export class TaskService {
     }
   }
 
-  public async update(taskDto: TaskDto): Promise<TaskDto> {
+  public async complete(id: string, taskDto: TaskDto): Promise<TaskDto> {
     const release = await this.mutex.acquire();
 
     try {
-      const task: TaskDto = await this.taskRepository.findOneAndUpdate(taskDto);
+      const task: TaskDto = await this.taskRepository.complete(id, taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(changedTaskStatusSchema, { event_id: uuidv4(), id: task.id });
+      const encodedMessage = await this.kafkaProducer.encode(completeTaskSchema, { id: task.id });
+
       const event = {
-        key: 'TaskStatusChanged',
+        key: 'TaskCompleted',
         value: encodedMessage,
+        headers: {
+          event_id: uuidv4(),
+          event_version: '1',
+          event_name: 'TaskCompleted',
+          event_time: Date.now().toString(),
+          producer: 'task-service',
+        },
       };
-      await this.kafkaProducer.sendMessage(this.topic, [event]);
-
+      await this.kafkaProducer.sendMessage('task-completed-topic', [event]);
       return task;
     } finally {
       release();
@@ -85,24 +99,40 @@ export class TaskService {
     try {
       const [tasks, developers] = await Promise.all([this.taskRepository.allRandom(), this.userRepository.allWhere('role', 'developer')]);
 
-      const taskPromises = tasks.map(assignTasks);
-      await Promise.all(taskPromises);
-
-      async function assignTasks(task: TaskDto) {
-        const developer: UserDto = developers[random(0, tasks.length)];
+      const assignedTasks: TaskDto[] = tasks.map(task => {
+        const developer: UserDto = developers[random(0, developers.length - 1)];
         task.developerId = developer.public_id;
-        const updatedTask = await this.taskRepository.findOneAndUpdate(task);
-        const { id, developerId: public_id } = updatedTask;
+        return task;
+      });
 
-        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, { event_id: uuidv4(), id, public_id });
+      await this.taskRepository.updateMany(assignedTasks);
+
+      const encodeTasks = async (task: TaskDto) => {
+        const { id, developerId: public_id } = task;
+
+        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, { id, public_id });
         const event = {
           key: 'TaskAssigned',
           value: encodedMessage,
+          headers: {
+            event_id: uuidv4(),
+            event_version: '1',
+            event_name: 'TaskAssigned',
+            event_time: Date.now().toString(),
+            producer: 'task-service',
+          },
         };
-        await this.kafkaProducer.sendMessage(this.topic, [event]);
-      }
+
+        return event;
+      };
+
+      const taskPromises = assignedTasks.map(encodeTasks);
+      const messages: Message[] = await Promise.all(taskPromises);
+      await this.kafkaProducer.sendMessage('task-assigned-topic', messages);
 
       return tasks;
+    } catch (error) {
+      throw error;
     } finally {
       release();
     }

@@ -27,7 +27,7 @@ export class UserRepository implements IUserRepository {
     const transaction = await DB.sequelize.transaction();
 
     try {
-      const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
+      const findUser: UserDto = await this.users.findOne({ where: { public_id: userData.public_id } });
       // if (findUser) throw new Error(`Your email ${userData.email} already exists`);
       if (findUser) return;
 

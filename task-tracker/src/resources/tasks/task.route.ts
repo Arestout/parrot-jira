@@ -18,7 +18,7 @@ export class TaskRoute implements Routes {
     this.router.get(`${this.path}/:id`, this.blockController.getById);
     this.router.post(`${this.path}/`, this.blockController.create);
     this.router.put(`${this.path}/assign`, [checkRole('manager')], this.blockController.assign);
-    this.router.put(`${this.path}/:id`, this.blockController.update);
-    this.router.put(`${this.path}/developer/:id`, [checkRole('developer')], this.blockController.getDevelopersTasks);
+    this.router.put(`${this.path}/:id`, [checkRole('developer')], this.blockController.complete);
+    this.router.get(`${this.path}/developer/:id`, [checkRole('developer')], this.blockController.getDevelopersTasks);
   }
 }

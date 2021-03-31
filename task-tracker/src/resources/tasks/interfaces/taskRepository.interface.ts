@@ -4,7 +4,8 @@ export interface ITaskRepository {
   all(): Promise<TaskDto[]>;
   allWhere<T>(key: string, value: T): Promise<TaskDto[]>;
   allRandom(): Promise<TaskDto[]>;
-  get(id: string): Promise<TaskDto>;
+  find(id: string): Promise<TaskDto>;
   create(taskDto: TaskDto): Promise<TaskDto>;
-  findOneAndUpdate(taskDto: TaskDto): Promise<TaskDto>;
+  findAndUpdate(taskDto: TaskDto): Promise<TaskDto>;
+  updateMany(tasks: TaskDto[]): Promise<void>;
 }

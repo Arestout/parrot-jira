@@ -17,7 +17,7 @@ export class TaskRepository implements ITaskRepository {
     return tasks;
   }
 
-  public async get(id: string): Promise<TaskDto> {
+  public async find(id: string): Promise<TaskDto> {
     const task: TaskDto = await this.tasks.findOne({
       where: { id },
     });
@@ -35,7 +35,7 @@ export class TaskRepository implements ITaskRepository {
     return task;
   }
 
-  public async findOneAndUpdate(taskDTO: TaskDto): Promise<TaskDto> {
+  public async findAndUpdate(taskDTO: TaskDto): Promise<TaskDto> {
     const findTask: TaskDto = await this.tasks.findByPk(taskDTO.id);
     if (isEmpty(findTask)) throw new HttpException(404, 'Task was not found');
 

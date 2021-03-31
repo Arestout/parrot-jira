@@ -13,13 +13,14 @@ export class UserRepository implements IUserRepository {
   }
 
   public async allWhere<T>(key: string, value: T): Promise<UserDto[]> {
-    const tasks: UserDto[] = await this.users.findAll({
+    const users: UserDto[] = await this.users.findAll({
       where: {
         [key]: value,
       },
+      raw: true,
     });
 
-    return tasks;
+    return users;
   }
 
   public async find(userId: string): Promise<UserDto> {

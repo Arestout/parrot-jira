@@ -6,5 +6,4 @@ export interface IKafkaProducer {
 
 export interface IKafkaConsumer {
   subscribe(topic: ConsumerSubscribeTopic): Promise<void>;
-  receiveMessages(handler: string): Promise<void>;
 }

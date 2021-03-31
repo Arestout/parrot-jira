@@ -4,21 +4,18 @@ export const createdTaskSchema = `
   "name": "TaskCreated",
   "namespace": "tasks",
   "fields": [
-    { "name": "event_id", "type": "string" },
-    { "name": "id", "type": "string" },
+    { "name": "id", "type": "string" }
   ]
 }
 `;
 
-export const changedTaskStatusSchema = `
+export const completeTaskSchema = `
 {
   "type": "record",
-  "name": "TaskDeleted",
+  "name": "TaskStatusChanged",
   "namespace": "tasks",
   "fields": [
-    { "name": "event_id", "type": "string" },
-    { "name": "id", "type": "string" },
-    { "name": "completed", "type": "boolean" },
+    { "name": "id", "type": "string" }
   ]
 }
 `;
@@ -29,9 +26,8 @@ export const assignedTaskSchema = `
   "name": "TaskDeleted",
   "namespace": "tasks",
   "fields": [
-    { "name": "event_id", "type": "string" },
     { "name": "id", "type": "string" },
-    { "name": "public_id", "type": "string" },
+    { "name": "public_id", "type": "string" }
   ]
 }
 `;

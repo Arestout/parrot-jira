@@ -15,7 +15,7 @@ export class TaskService {
   }
 
   public async get(id: string): Promise<TaskDto> {
-    const task: TaskDto = await this.taskRepository.get(id);
+    const task: TaskDto = await this.taskRepository.find(id);
 
     return task;
   }
@@ -27,7 +27,7 @@ export class TaskService {
   }
 
   public async update(taskDTO: TaskDto): Promise<TaskDto> {
-    const task: TaskDto = await this.taskRepository.findOneAndUpdate(taskDTO);
+    const task: TaskDto = await this.taskRepository.findAndUpdate(taskDTO);
 
     return task;
   }
