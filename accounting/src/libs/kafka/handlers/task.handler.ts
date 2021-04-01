@@ -13,6 +13,8 @@ export const taskHandler = async message => {
     throw new Error('Unsupported version');
   }
 
+  // console.log('HERE', message.value);
+
   switch (message.key.toString()) {
     case 'TaskCreated':
       return await taskService.create(message.value);

@@ -5,7 +5,7 @@ export const taskValueSetSchema = `
   "namespace": "tasks",
   "fields": [
     { "name": "id", "type": "string" },
-    { "name": "value", "type": "number" }
+    { "name": "value", "type": "int" }
   ]
 }
 `;

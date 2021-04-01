@@ -30,21 +30,62 @@ export class TaskRepository implements ITaskRepository {
   }
 
   public async create(taskDTO: Partial<TaskDto>): Promise<TaskDto> {
-    const task: TaskDto = await this.tasks.create({ ...taskDTO }).then(taskData => {
-      return taskData.get({ plain: true });
-    });
+    if (isEmpty(taskDTO)) throw new Error('Empty task data');
+
+    const task: TaskDto = await this.tasks.create({ ...taskDTO });
 
     return task;
   }
 
   public async findAndUpdate(taskDTO: TaskDto): Promise<TaskDto> {
-    const findTask: TaskDto = await this.tasks.findByPk(taskDTO.id);
-    if (isEmpty(findTask)) throw new HttpException(404, 'Task was not found');
+    const transaction = await DB.sequelize.transaction();
 
-    await this.tasks.update({ ...taskDTO }, { where: { id: taskDTO.id } });
+    try {
+      const findTask: TaskDto = await this.tasks.findByPk(taskDTO.id);
+      if (isEmpty(findTask)) throw new HttpException(404, 'Task was not found');
 
-    const updatedTask: TaskDto = await this.tasks.findByPk(taskDTO.id);
+      await this.tasks.update({ ...taskDTO }, { where: { id: taskDTO.id } });
 
-    return updatedTask;
+      const updatedTask: TaskDto = await this.tasks.findByPk(taskDTO.id);
+
+      transaction.commit();
+      return updatedTask;
+    } catch (error) {
+      transaction.rollback();
+      throw error;
+    }
+  }
+
+  public async sum(): Promise<number> {
+    const dayStart = new Date().setHours(0, 0, 0, 0);
+    const dayEnd = new Date().setHours(23, 59, 59, 999);
+
+    const tasksSum = await this.tasks.sum('value', {
+      where: {
+        createdAt: {
+          [DB.Sequelize.Op.gt]: dayStart,
+          [DB.Sequelize.Op.lt]: dayEnd,
+        },
+      },
+    });
+
+    return tasksSum;
+  }
+
+  public async getDailyTasks() {
+    const dayStart = new Date().setHours(0, 0, 0, 0);
+    const dayEnd = new Date().setHours(23, 59, 59, 999);
+
+    const dailyTasks = await this.tasks.findAll({
+      where: {
+        createdAt: {
+          [DB.Sequelize.Op.gt]: dayStart,
+          [DB.Sequelize.Op.lt]: dayEnd,
+        },
+      },
+      include: [{ model: DB.Transactions }],
+    });
+
+    return dailyTasks;
   }
 }

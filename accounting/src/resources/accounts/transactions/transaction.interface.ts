@@ -8,4 +8,6 @@ export interface TransactionDto {
   account_id: string;
   debit: number;
   credit: number;
+  task_id: string;
+  createdAt?: Date;
 }

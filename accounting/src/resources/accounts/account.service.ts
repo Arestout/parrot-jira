@@ -6,14 +6,17 @@ import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { random } from '../../utils/random';
 import { taskAssignedTransactionSchema } from '../../libs/kafka/schemas/taskAssignTransactionApplied.schema';
 import { AccountDto } from './interfaces/account.interface';
+import { ITaskRepository } from '../tasks/interfaces/taskRepository.interface';
 
 export class AccountService {
   public accountRepository: IAccountRepository;
+  public taskRepository: ITaskRepository;
   public kafkaProducer: IKafkaProducer;
 
-  constructor(repository: IAccountRepository, kafkaProducer: IKafkaProducer) {
+  constructor(repository: IAccountRepository, kafkaProducer: IKafkaProducer, taskRepository: ITaskRepository) {
     this.accountRepository = repository;
     this.kafkaProducer = kafkaProducer;
+    this.taskRepository = taskRepository;
   }
 
   public async all(): Promise<AccountDto[]> {
@@ -23,8 +26,8 @@ export class AccountService {
   }
 
   public async addTransaction(type: string, data): Promise<TransactionDto> {
-    console.log('data: ', data);
     const createTransaction = {
+      task_id: data.id,
       debit: type === 'debit' ? random(10, 30) : 0,
       credit: type === 'credit' ? random(10, 30) : 0,
     };
@@ -65,5 +68,17 @@ export class AccountService {
       },
     };
     await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
+  }
+
+  public async getDailyData() {
+    const [tasksSum, getDailyDebits, getDailyTransactions] = await Promise.all([
+      this.taskRepository.sum(),
+      this.accountRepository.getDailyDebits(),
+      this.accountRepository.getDailyTransactions(),
+    ]);
+
+    const managersProfit = (tasksSum + getDailyDebits) * -1;
+
+    return { managersProfit, getDailyTransactions };
   }
 }

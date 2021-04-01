@@ -5,4 +5,6 @@ export interface ITaskRepository {
   find(id: string): Promise<TaskDto>;
   create(TaskDto: TaskDto): Promise<TaskDto>;
   findAndUpdate(TaskDto: TaskDto): Promise<TaskDto>;
+  sum(): Promise<number>;
+  getDailyTasks();
 }
