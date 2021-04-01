@@ -10,7 +10,8 @@ import {
   makeStyles,
   createStyles,
 } from '@material-ui/core';
-import axios from 'axios';
+
+import { api } from '../../../api';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -35,7 +36,7 @@ export const Todo: React.FC = ({ todo }) => {
         ...todo,
         completed: true,
       };
-      const response = await axios.put(`/api/tasks/${todo.id}`, data);
+      const response = await api.put(`/tasks/${todo.id}`, data);
       setStatus(response.data.completed);
     } catch (error) {
       console.log(error);

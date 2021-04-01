@@ -58,6 +58,14 @@ export default function (sequelize: Sequelize): typeof UserModel {
     {
       tableName: 'users',
       sequelize,
+      defaultScope: {
+        attributes: { exclude: ['password', 'id'] },
+      },
+      scopes: {
+        withPassword: {
+          attributes: {} as any,
+        },
+      },
     },
   );
 

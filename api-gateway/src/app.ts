@@ -67,6 +67,7 @@ class App {
 
   private initializeProxyRoutes() {
     this.app.use('/tasks', [authMiddleware, createProxyMiddleware({ target: 'http://task-tracker:3001', changeOrigin: true })]);
+    this.app.use('/accounting', [authMiddleware, createProxyMiddleware({ target: 'http://accounting:3005', changeOrigin: true })]);
   }
 
   private initializeErrorHandling() {

@@ -3,11 +3,12 @@ import { CreateUserDto } from './user.dto';
 import { UserDto } from './interfaces/user.interface';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
+import { KafkaProducer } from '../../libs/kafka/kafka.producer';
 
 const userRepository = new UserRepository();
-
+const kafkaProducer = new KafkaProducer();
 export class UserController {
-  public userService = new UserService(userRepository);
+  public userService = new UserService(userRepository, kafkaProducer);
 
   public getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -34,7 +35,7 @@ export class UserController {
 
     try {
       const createUserData: UserDto = await this.userService.createUser(userData);
-      res.status(201).json({ data: createUserData, message: 'created' });
+      res.status(201).json({ data: createUserData, message: 'Registration successful' });
     } catch (error) {
       next(error);
     }

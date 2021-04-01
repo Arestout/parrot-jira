@@ -4,11 +4,14 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import DB from './database';
+import { Consumer } from 'kafkajs';
 
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
 import { Routes } from './interfaces/routes.interface';
 import { PORT, NODE_ENV } from './config';
+import { kafka } from './libs/kafka/kafka.config';
+import { KafkaConsumer } from './libs/kafka/kafka.consumer';
 
 class App {
   public app: express.Application;
@@ -24,6 +27,7 @@ class App {
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
+    this.initializeKafkaConsumer();
   }
 
   public listen() {
@@ -61,6 +65,14 @@ class App {
     });
   }
 
+  private initializeKafkaConsumer() {
+    const consumer: Consumer = kafka.consumer({ groupId: 'task-tracker-group' });
+    const kafkaConsumer = new KafkaConsumer(consumer);
+
+    (async function () {
+      await kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true });
+    })();
+  }
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
   }

@@ -1,13 +1,21 @@
-import { IUserRepository } from './interfaces/userRepository.interface';
 import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { Mutex } from 'async-mutex';
+
+import { IUserRepository } from './interfaces/userRepository.interface';
 import { CreateUserDto } from './user.dto';
 import { UserDto } from './interfaces/user.interface';
-
+import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
+import { createdUserSchema, updatedUserSchema, deletedUserSchema } from './../../libs/kafka/schemas/user.schema';
 export class UserService {
   protected userRepository: IUserRepository;
+  protected kafkaProducer: IKafkaProducer;
+  private topic = 'user-topic';
+  private mutex = new Mutex();
 
-  constructor(repository: IUserRepository) {
+  constructor(repository: IUserRepository, kafkaProducer: IKafkaProducer) {
     this.userRepository = repository;
+    this.kafkaProducer = kafkaProducer;
   }
 
   public async findAllUser(): Promise<UserDto[]> {
@@ -23,27 +31,83 @@ export class UserService {
   }
 
   public async createUser(userData: CreateUserDto): Promise<UserDto> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
+    const release = await this.mutex.acquire();
 
-    // Stream user data
+    try {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
 
-    return createUserData;
+      const encodedMessage = await this.kafkaProducer.encode(createdUserSchema, createUserData);
+      const event = {
+        key: 'UserCreated',
+        value: encodedMessage,
+        headers: {
+          event_id: uuidv4(),
+          event_version: '1',
+          event_name: 'UserCreated',
+          event_time: Date.now().toString(),
+          producer: 'api-gateway',
+        },
+      };
+
+      await this.kafkaProducer.sendMessage(this.topic, [event]);
+
+      return createUserData;
+    } catch (error) {
+      throw error;
+    } finally {
+      release();
+    }
   }
 
   public async updateUser(userId: string, userData: UserDto): Promise<UserDto> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    await this.userRepository.update(userId, { ...userData, password: hashedPassword });
+    const release = await this.mutex.acquire();
 
-    const updateUser: UserDto = await this.userRepository.find(userId);
-    return updateUser;
+    try {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      await this.userRepository.update(userId, { ...userData, password: hashedPassword });
+
+      const updateUser: UserDto = await this.userRepository.find(userId);
+
+      const encodedMessage = await this.kafkaProducer.encode(updatedUserSchema, updateUser);
+      const event = {
+        key: 'UserUpdated',
+        value: encodedMessage,
+        headers: {
+          event_id: uuidv4(),
+          event_version: '1',
+          event_name: 'UserUpdated',
+          event_time: Date.now().toString(),
+          producer: 'api-gateway',
+        },
+      };
+      await this.kafkaProducer.sendMessage(this.topic, [event]);
+
+      return updateUser;
+    } catch (error) {
+      throw error;
+    } finally {
+      release();
+    }
   }
 
   public async deleteUserData(userId: string): Promise<UserDto> {
-    const findUser: UserDto = await this.userRepository.find(userId);
+    const deletedUser: UserDto = await this.userRepository.delete(userId);
 
-    await this.userRepository.delete(userId);
+    const encodedMessage = await this.kafkaProducer.encode(deletedUserSchema, { public_id: deletedUser.public_id });
+    const event = {
+      key: 'UserDeleted',
+      value: encodedMessage,
+      headers: {
+        event_id: uuidv4(),
+        event_version: '1',
+        event_name: 'UserDeleted',
+        event_time: Date.now().toString(),
+        producer: 'api-gateway',
+      },
+    };
+    await this.kafkaProducer.sendMessage(this.topic, [event]);
 
-    return findUser;
+    return deletedUser;
   }
 }

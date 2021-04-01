@@ -31,7 +31,11 @@ export class UserRepository implements IUserRepository {
       const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
       if (findUser) throw new HttpException(409, `Your email ${userData.email} already exists`);
 
-      const createUserData: UserDto = await this.users.create(userData);
+      const createUserData: UserDto = await this.users.create(userData).then(userData => {
+        return userData.get({ plain: true });
+      });
+      delete createUserData.password;
+      delete createUserData.id;
 
       await transaction.commit();
       return createUserData;

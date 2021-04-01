@@ -6,7 +6,6 @@ import { DataStoredInToken, TokenData } from './auth.interface';
 import { UserDto } from '../users/interfaces/user.interface';
 import DB from '../../database';
 import { isEmpty } from '../../utils/util';
-
 export class AuthService {
   public users = DB.Users;
 
@@ -36,7 +35,7 @@ export class AuthService {
     const transaction = await DB.sequelize.transaction();
 
     try {
-      const findUser: UserDto = await this.users.findOne({ where: { email: userData.email } });
+      const findUser: UserDto = await this.users.scope('withPassword').findOne({ where: { email: userData.email } });
       if (!findUser) throw new HttpException(409, `Wrong email or password`);
 
       const isPasswordMatching: boolean = await bcrypt.compare(userData.password, findUser.password);
