@@ -73,7 +73,7 @@ export class TaskService {
     try {
       const task: TaskDto = await this.taskRepository.complete(id, taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(completeTaskSchema, { id: task.id });
+      const encodedMessage = await this.kafkaProducer.encode(completeTaskSchema, { id: task.id, user_id: task.developerId });
 
       const event = {
         key: 'TaskCompleted',
@@ -86,7 +86,7 @@ export class TaskService {
           producer: 'task-service',
         },
       };
-      await this.kafkaProducer.sendMessage('task-completed-topic', [event]);
+      await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
       return task;
     } finally {
       release();
@@ -110,7 +110,7 @@ export class TaskService {
       const encodeTasks = async (task: TaskDto) => {
         const { id, developerId: public_id } = task;
 
-        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, { id, public_id });
+        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, { id, user_id: public_id });
         const event = {
           key: 'TaskAssigned',
           value: encodedMessage,
@@ -128,7 +128,7 @@ export class TaskService {
 
       const taskPromises = assignedTasks.map(encodeTasks);
       const messages: Message[] = await Promise.all(taskPromises);
-      await this.kafkaProducer.sendMessage('task-assigned-topic', messages);
+      await this.kafkaProducer.sendMessage('task-transaction-topic', messages);
 
       return tasks;
     } catch (error) {

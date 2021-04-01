@@ -4,6 +4,8 @@ import { logger } from '../utils/logger';
 import { NODE_ENV } from './../config/index';
 import TaskModel from './../resources/tasks/task.model';
 import UserModel from '../resources/users/user.model';
+import AccountModel from '../resources/accounts/account.model';
+import TransactionModel from '../resources/accounts/transactions/transaction.model';
 
 const env = NODE_ENV;
 const sequelize = new Sequelize.Sequelize(dbConfig[env].database, dbConfig[env].username, dbConfig[env].password, {
@@ -36,6 +38,8 @@ sequelize
 const DB = {
   Tasks: TaskModel(sequelize),
   Users: UserModel(sequelize),
+  Accounts: AccountModel(sequelize),
+  Transactions: TransactionModel(sequelize),
   sequelize, // connection instance (RAW queries)
   Sequelize, // library
 };

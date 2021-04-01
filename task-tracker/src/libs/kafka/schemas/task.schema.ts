@@ -12,10 +12,11 @@ export const createdTaskSchema = `
 export const completeTaskSchema = `
 {
   "type": "record",
-  "name": "TaskStatusChanged",
+  "name": "TaskCompleted",
   "namespace": "tasks",
   "fields": [
-    { "name": "id", "type": "string" }
+    { "name": "id", "type": "string" },
+    { "name": "user_id", "type": "string" }
   ]
 }
 `;
@@ -23,11 +24,11 @@ export const completeTaskSchema = `
 export const assignedTaskSchema = `
 {
   "type": "record",
-  "name": "TaskDeleted",
+  "name": "TaskAssigned",
   "namespace": "tasks",
   "fields": [
     { "name": "id", "type": "string" },
-    { "name": "public_id", "type": "string" }
+    { "name": "user_id", "type": "string" }
   ]
 }
 `;

@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { userHandler } from './handlers/user.handler';
 import { taskHandler } from './handlers/task.handler';
 import { registry } from './kafka.config';
+import { taskTransactionHandler } from './handlers/taskTransaction.handler';
 
 // Test implementation
 // TODO refactor
@@ -14,6 +15,7 @@ export class KafkaConsumer implements IKafkaConsumer {
   private handlers = new Map<string, any>([
     ['user-topic', userHandler],
     ['task-topic', taskHandler],
+    ['task-transaction-topic', taskTransactionHandler],
   ]);
 
   public constructor(consumer: Consumer) {

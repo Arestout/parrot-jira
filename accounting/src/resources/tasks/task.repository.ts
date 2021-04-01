@@ -30,7 +30,9 @@ export class TaskRepository implements ITaskRepository {
   }
 
   public async create(taskDTO: Partial<TaskDto>): Promise<TaskDto> {
-    const task: TaskDto = await this.tasks.create({ ...taskDTO });
+    const task: TaskDto = await this.tasks.create({ ...taskDTO }).then(taskData => {
+      return taskData.get({ plain: true });
+    });
 
     return task;
   }

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { kafka, registry } from './kafka.config';
 import { IKafkaProducer } from './kafka.interface';
 
+// TODO: move encode and getTransaction to a separate class
 export class KafkaProducer implements IKafkaProducer {
   protected producer: Producer;
   private connectionPromise: Promise<void> | null;
