@@ -5,6 +5,7 @@ import { IAccountRepository } from './interfaces/accountRepository.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { random } from '../../utils/random';
 import { taskAssignedTransactionSchema } from '../../libs/kafka/schemas/taskAssignTransactionApplied.schema';
+import { AccountDto } from './interfaces/account.interface';
 
 export class AccountService {
   public accountRepository: IAccountRepository;
@@ -13,6 +14,12 @@ export class AccountService {
   constructor(repository: IAccountRepository, kafkaProducer: IKafkaProducer) {
     this.accountRepository = repository;
     this.kafkaProducer = kafkaProducer;
+  }
+
+  public async all(): Promise<AccountDto[]> {
+    const tasks: AccountDto[] = await this.accountRepository.all();
+
+    return tasks;
   }
 
   public async addTransaction(type: string, data): Promise<TransactionDto> {
@@ -37,8 +44,26 @@ export class AccountService {
         producer: 'accounting-service',
       },
     };
-    await this.kafkaProducer.sendMessage('task-assigned-topic', [event]);
+    await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
 
     return transaction;
+  }
+
+  public async updateBalance(user_id: string, currentBalance: number) {
+    await this.accountRepository.update(user_id, { balance: currentBalance });
+
+    const encodedMessage = await this.kafkaProducer.encode(taskAssignedTransactionSchema, { amount: currentBalance, user_id });
+    const event = {
+      key: 'paymentSend',
+      value: encodedMessage,
+      headers: {
+        event_id: uuidv4(),
+        event_version: '1',
+        event_name: 'paymentSend',
+        event_time: Date.now().toString(),
+        producer: 'accounting-service',
+      },
+    };
+    await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
   }
 }
