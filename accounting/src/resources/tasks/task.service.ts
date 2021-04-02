@@ -28,6 +28,7 @@ export class TaskService {
   }
 
   public async create(taskDTO: TaskDto): Promise<TaskDto> {
+    console.log(taskDTO);
     const task: TaskDto = await this.taskRepository.create(taskDTO);
 
     const encodedMessage = await this.kafkaProducer.encode(taskValueSetSchema, { id: task.id, value: task.value });
@@ -51,5 +52,11 @@ export class TaskService {
     const task: TaskDto = await this.taskRepository.findAndUpdate(taskDTO);
 
     return task;
+  }
+
+  public async getDailyTaskValuesSum(): Promise<number> {
+    const dailyTaskValuesSum = await this.taskRepository.sum();
+
+    return dailyTaskValuesSum;
   }
 }

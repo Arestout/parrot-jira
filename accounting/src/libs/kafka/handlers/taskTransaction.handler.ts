@@ -1,10 +1,12 @@
 import { AccountRepository } from '../../../resources/accounts/account.repository';
-import { AccountService } from '../../../resources/accounts/account.service';
+import { TransactionRepository } from '../../../resources/transactions/transaction.repository';
+import { TransactionService } from '../../../resources/transactions/transaction.service';
 import { KafkaProducer } from '../kafka.producer';
 
 const accountsRepository = new AccountRepository();
+const transactionRepository = new TransactionRepository();
 const kafkaProducer = new KafkaProducer();
-const accountService = new AccountService(accountsRepository, kafkaProducer);
+const transactionService = new TransactionService(transactionRepository, accountsRepository, kafkaProducer);
 
 export const taskTransactionHandler = async message => {
   const { event_version } = message.headers;
@@ -15,9 +17,9 @@ export const taskTransactionHandler = async message => {
 
   switch (message.key.toString()) {
     case 'TaskAssigned':
-      return await accountService.addTransaction('credit', message.value);
+      return await transactionService.addTransaction('credit', message.value);
     case 'TaskCompleted':
-      return await accountService.addTransaction('debit', message.value);
+      return await transactionService.addTransaction('debit', message.value);
     default:
       return;
   }

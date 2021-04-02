@@ -47,7 +47,7 @@ export class TaskService {
     try {
       const task: TaskDto = await this.taskRepository.create(taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { id: task.id, description: task.description });
+      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { id: task.id });
       const event = {
         key: 'TaskCreated',
         value: encodedMessage,
@@ -114,12 +114,12 @@ export class TaskService {
       await this.taskRepository.updateMany(assignedTasks);
 
       const encodeTasks = async (task: TaskDto) => {
-        const { id, developerId: public_id } = task;
+        const { id, developerId: user_id } = task;
 
         const message = {
           id,
-          public_id,
-          description: `Developer with id ${public_id} has completed the task with id ${id}`,
+          user_id,
+          description: `Developer with id ${user_id} has completed the task with id ${id}`,
         };
 
         const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, message);

@@ -15,7 +15,7 @@ export class KafkaConsumer implements IKafkaConsumer {
   private handlers = new Map<string, any>([
     ['user-topic', userHandler],
     ['task-topic', taskHandler],
-    ['task-transaction-topic', taskTransactionHandler],
+    ['task-status-topic', taskTransactionHandler],
   ]);
 
   public constructor(consumer: Consumer) {

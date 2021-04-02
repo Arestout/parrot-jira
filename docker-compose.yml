@@ -42,6 +42,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_HOST=db-tasks
       - POSTGRES_DB=${POSTGRES_DB}
+      - USER_TOPIC=${USER_TOPIC}
+      - TASK_TOPIC=${TASK_TOPIC}
+      - TASK_STATUS_TOPIC=${TASK_STATUS_TOPIC}
     restart: unless-stopped
     networks:
       - parrot-tasks-network
@@ -88,6 +91,7 @@ services:
       - POSTGRES_HOST=db-api-gateway
       - POSTGRES_DB=${POSTGRES_DB_API_GATEWAY}
       - JWT_SECRET=${JWT_SECRET}
+      - USER_TOPIC=${USER_TOPIC}
     restart: unless-stopped
     links:
       - task-tracker
@@ -127,6 +131,9 @@ services:
       - POSTGRES_HOST=db-accounting
       - POSTGRES_DB=${POSTGRES_DB_ACCOUNTING}
       - JWT_SECRET=${JWT_SECRET}
+      - USER_TOPIC=${USER_TOPIC}
+      - TASK_TOPIC=${TASK_TOPIC}
+      - TASK_STATUS_TOPIC=${TASK_STATUS_TOPIC}
     restart: unless-stopped
     networks:
       - parrot-api-gateway-network

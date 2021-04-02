@@ -1,10 +1,10 @@
 import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
 
-import { TransactionDto } from './transaction.interface';
+import { TransactionDto } from './interfaces/transaction.interface';
 
-export type TaskCreationAttributes = Optional<TransactionDto, 'id' | 'account_id' | 'debit' | 'credit' | 'type' | 'description'>;
+export type TransactionCreationAttributes = Optional<TransactionDto, 'id' | 'account_id' | 'debit' | 'credit' | 'type' | 'description'>;
 
-export class TransactionModel extends Model<TransactionDto, TaskCreationAttributes> implements TransactionDto {
+export class TransactionModel extends Model<TransactionDto, TransactionCreationAttributes> implements TransactionDto {
   public id: string;
   public account_id: string;
   public debit: number;
