@@ -4,6 +4,7 @@ import { TaskDto } from './interfaces/task.interface';
 import { ITaskRepository } from './interfaces/taskRepository.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { taskValueSetSchema } from './../../libs/kafka/schemas/taskValueSet.schema';
+import { TASK_TOPIC } from '../../config';
 
 export class TaskService {
   public taskRepository: ITaskRepository;
@@ -41,7 +42,7 @@ export class TaskService {
         producer: 'accounting-service',
       },
     };
-    await this.kafkaProducer.sendMessage('task-topic', [event]);
+    await this.kafkaProducer.sendMessage(TASK_TOPIC, [event]);
 
     return task;
   }

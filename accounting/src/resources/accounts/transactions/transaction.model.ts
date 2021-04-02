@@ -2,7 +2,7 @@ import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
 
 import { TransactionDto } from './transaction.interface';
 
-export type TaskCreationAttributes = Optional<TransactionDto, 'id' | 'account_id' | 'debit' | 'credit'>;
+export type TaskCreationAttributes = Optional<TransactionDto, 'id' | 'account_id' | 'debit' | 'credit' | 'type' | 'description'>;
 
 export class TransactionModel extends Model<TransactionDto, TaskCreationAttributes> implements TransactionDto {
   public id: string;
@@ -10,6 +10,8 @@ export class TransactionModel extends Model<TransactionDto, TaskCreationAttribut
   public debit: number;
   public credit: number;
   public task_id: string;
+  public description: string;
+  public type: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -41,6 +43,12 @@ export default function (sequelize: Sequelize): typeof TransactionModel {
       },
       task_id: {
         type: DataTypes.UUID,
+      },
+      type: {
+        type: DataTypes.TEXT,
+      },
+      description: {
+        type: DataTypes.TEXT,
       },
     },
     {

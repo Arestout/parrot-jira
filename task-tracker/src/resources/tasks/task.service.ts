@@ -9,12 +9,12 @@ import { random } from '../../utils/random';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { createdTaskSchema, assignedTaskSchema, completeTaskSchema } from './../../libs/kafka/schemas/task.schema';
 import { Message } from 'kafkajs';
+import { TASK_TOPIC, TASK_STATUS_TOPIC } from '../../config';
 
 export class TaskService {
   protected taskRepository: ITaskRepository;
   protected userRepository: IUserRepository;
   protected kafkaProducer: IKafkaProducer;
-  private topic = 'task-topic';
   private mutex = new Mutex();
 
   constructor(taskRepository: ITaskRepository, userRepository: IUserRepository, kafkaProducer: IKafkaProducer) {
@@ -47,7 +47,7 @@ export class TaskService {
     try {
       const task: TaskDto = await this.taskRepository.create(taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { id: task.id });
+      const encodedMessage = await this.kafkaProducer.encode(createdTaskSchema, { id: task.id, description: task.description });
       const event = {
         key: 'TaskCreated',
         value: encodedMessage,
@@ -59,7 +59,7 @@ export class TaskService {
           producer: 'task-service',
         },
       };
-      await this.kafkaProducer.sendMessage(this.topic, [event]);
+      await this.kafkaProducer.sendMessage(TASK_TOPIC, [event]);
 
       return task;
     } finally {
@@ -73,7 +73,13 @@ export class TaskService {
     try {
       const task: TaskDto = await this.taskRepository.complete(id, taskDto);
 
-      const encodedMessage = await this.kafkaProducer.encode(completeTaskSchema, { id: task.id, user_id: task.developerId });
+      const message = {
+        id: task.id,
+        user_id: task.developerId,
+        description: `Developer with id ${task.developerId} has completed the task with id ${task.id}`,
+      };
+
+      const encodedMessage = await this.kafkaProducer.encode(completeTaskSchema, message);
 
       const event = {
         key: 'TaskCompleted',
@@ -86,7 +92,7 @@ export class TaskService {
           producer: 'task-service',
         },
       };
-      await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
+      await this.kafkaProducer.sendMessage(TASK_STATUS_TOPIC, [event]);
       return task;
     } finally {
       release();
@@ -110,7 +116,13 @@ export class TaskService {
       const encodeTasks = async (task: TaskDto) => {
         const { id, developerId: public_id } = task;
 
-        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, { id, user_id: public_id });
+        const message = {
+          id,
+          public_id,
+          description: `Developer with id ${public_id} has completed the task with id ${id}`,
+        };
+
+        const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, message);
         const event = {
           key: 'TaskAssigned',
           value: encodedMessage,
@@ -128,7 +140,7 @@ export class TaskService {
 
       const taskPromises = assignedTasks.map(encodeTasks);
       const messages: Message[] = await Promise.all(taskPromises);
-      await this.kafkaProducer.sendMessage('task-transaction-topic', messages);
+      await this.kafkaProducer.sendMessage(TASK_STATUS_TOPIC, messages);
 
       return tasks;
     } catch (error) {

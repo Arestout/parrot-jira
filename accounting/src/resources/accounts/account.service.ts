@@ -4,9 +4,10 @@ import { TransactionDto } from './transactions/transaction.interface';
 import { IAccountRepository } from './interfaces/accountRepository.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { random } from '../../utils/random';
-import { taskAssignedTransactionSchema } from '../../libs/kafka/schemas/taskAssignTransactionApplied.schema';
+import { transactionSchema } from '../../libs/kafka/schemas/transaction.schema';
 import { AccountDto } from './interfaces/account.interface';
 import { ITaskRepository } from '../tasks/interfaces/taskRepository.interface';
+import { TASK_STATUS_TOPIC } from './../../config/index';
 
 export class AccountService {
   public accountRepository: IAccountRepository;
@@ -30,12 +31,14 @@ export class AccountService {
       task_id: data.id,
       debit: type === 'debit' ? random(10, 30) : 0,
       credit: type === 'credit' ? random(10, 30) : 0,
+      type,
+      description: data.description,
     };
 
     const transaction: TransactionDto = await this.accountRepository.addTransaction(data.user_id, createTransaction);
     const { id, debit, credit } = transaction;
 
-    const encodedMessage = await this.kafkaProducer.encode(taskAssignedTransactionSchema, { user_id: data.user_id, id, debit, credit });
+    const encodedMessage = await this.kafkaProducer.encode(transactionSchema, { user_id: data.user_id, id, debit, credit });
     const event = {
       key: 'taskTransactionApplied',
       value: encodedMessage,
@@ -47,7 +50,7 @@ export class AccountService {
         producer: 'accounting-service',
       },
     };
-    await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
+    await this.kafkaProducer.sendMessage(TASK_STATUS_TOPIC, [event]);
 
     return transaction;
   }
@@ -55,7 +58,7 @@ export class AccountService {
   public async updateBalance(user_id: string, currentBalance: number) {
     await this.accountRepository.update(user_id, { balance: currentBalance });
 
-    const encodedMessage = await this.kafkaProducer.encode(taskAssignedTransactionSchema, { amount: currentBalance, user_id });
+    const encodedMessage = await this.kafkaProducer.encode(transactionSchema, { amount: currentBalance, user_id });
     const event = {
       key: 'paymentSend',
       value: encodedMessage,
@@ -67,7 +70,7 @@ export class AccountService {
         producer: 'accounting-service',
       },
     };
-    await this.kafkaProducer.sendMessage('task-transaction-topic', [event]);
+    await this.kafkaProducer.sendMessage(TASK_STATUS_TOPIC, [event]);
   }
 
   public async getDailyData() {

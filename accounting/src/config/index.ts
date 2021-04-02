@@ -25,5 +25,7 @@ export const dbConfig = {
 export const PORT = process.env.PORT || 3001;
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const REDIS_HOST = process.env.REDIS_HOST;
-export const WALLET = 'http://user:password@wallet:8332';
-export const DIGITS = 1e8;
+
+export const USER_TOPIC = process.env.USER_TOPIC;
+export const TASK_TOPIC = process.env.TASK_TOPIC;
+export const TASK_STATUS_TOPIC = process.env.TASK_STATUS_TOPIC;

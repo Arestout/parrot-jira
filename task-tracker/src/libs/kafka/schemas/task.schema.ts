@@ -16,7 +16,8 @@ export const completeTaskSchema = `
   "namespace": "tasks",
   "fields": [
     { "name": "id", "type": "string" },
-    { "name": "user_id", "type": "string" }
+    { "name": "user_id", "type": "string" },
+    { "name": "description", "type": "string" }
   ]
 }
 `;
@@ -28,7 +29,8 @@ export const assignedTaskSchema = `
   "namespace": "tasks",
   "fields": [
     { "name": "id", "type": "string" },
-    { "name": "user_id", "type": "string" }
+    { "name": "user_id", "type": "string" },
+    { "name": "description", "type": "string" }
   ]
 }
 `;

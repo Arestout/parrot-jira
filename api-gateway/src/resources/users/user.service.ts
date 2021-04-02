@@ -7,10 +7,10 @@ import { CreateUserDto } from './user.dto';
 import { UserDto } from './interfaces/user.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { createdUserSchema, updatedUserSchema, deletedUserSchema } from './../../libs/kafka/schemas/user.schema';
+import { USER_TOPIC } from './../../config/index';
 export class UserService {
   protected userRepository: IUserRepository;
   protected kafkaProducer: IKafkaProducer;
-  private topic = 'user-topic';
   private mutex = new Mutex();
 
   constructor(repository: IUserRepository, kafkaProducer: IKafkaProducer) {
@@ -50,7 +50,7 @@ export class UserService {
         },
       };
 
-      await this.kafkaProducer.sendMessage(this.topic, [event]);
+      await this.kafkaProducer.sendMessage(USER_TOPIC, [event]);
 
       return createUserData;
     } catch (error) {
@@ -81,7 +81,7 @@ export class UserService {
           producer: 'api-gateway',
         },
       };
-      await this.kafkaProducer.sendMessage(this.topic, [event]);
+      await this.kafkaProducer.sendMessage(USER_TOPIC, [event]);
 
       return updateUser;
     } catch (error) {
@@ -106,7 +106,7 @@ export class UserService {
         producer: 'api-gateway',
       },
     };
-    await this.kafkaProducer.sendMessage(this.topic, [event]);
+    await this.kafkaProducer.sendMessage(USER_TOPIC, [event]);
 
     return deletedUser;
   }

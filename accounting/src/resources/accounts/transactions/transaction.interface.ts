@@ -9,5 +9,7 @@ export interface TransactionDto {
   debit: number;
   credit: number;
   task_id: string;
+  type: string;
+  description: string;
   createdAt?: Date;
 }

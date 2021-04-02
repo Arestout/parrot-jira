@@ -27,3 +27,5 @@ export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const JWT_SECRET = process.env.JWT_SECRET;
 export const HOST_IP = process.env.HOST_IP;
+
+export const USER_TOPIC = process.env.USER_TOPIC;
