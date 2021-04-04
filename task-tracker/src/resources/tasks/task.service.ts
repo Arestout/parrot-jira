@@ -10,6 +10,7 @@ import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { createdTaskSchema, assignedTaskSchema, completeTaskSchema } from './../../libs/kafka/schemas/task.schema';
 import { Message } from 'kafkajs';
 import { TASK_TOPIC, TASK_STATUS_TOPIC } from '../../config';
+import { notificationQueue } from '../../libs/bull/bull.config';
 
 export class TaskService {
   protected taskRepository: ITaskRepository;
@@ -119,8 +120,10 @@ export class TaskService {
         const message = {
           id,
           user_id,
-          description: `Developer with id ${user_id} has completed the task with id ${id}`,
+          description: `Task with id ${id} was assigned to developer with id ${user_id}`,
         };
+
+        await notificationQueue.add({ user_id, message: message.description }, { delay: 1000 });
 
         const encodedMessage = await this.kafkaProducer.encode(assignedTaskSchema, message);
         const event = {
