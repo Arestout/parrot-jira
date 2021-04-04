@@ -4,6 +4,8 @@ import { AccountDto } from '../../resources/accounts/interfaces/account.interfac
 import { PaymentRepository } from '../../resources/payments/payment.repository';
 import { PaymentService } from '../../resources/payments/payment.service';
 import { TransactionRepository } from '../../resources/transactions/transaction.repository';
+import { logger } from '../../utils/logger';
+import { notificationQueue, paymentsQueue } from '../bull/bull.config';
 import { KafkaProducer } from '../kafka/kafka.producer';
 
 const kafkaProducer = new KafkaProducer();
@@ -14,24 +16,30 @@ const accountService = new AccountService(accountRepository, transactionReposito
 const paymentService = new PaymentService(paymentRepository, accountRepository, kafkaProducer);
 
 export const sendPayment = async () => {
-  const accounts: AccountDto[] = await accountService.all();
+  try {
+    const accounts: AccountDto[] = await accountService.all();
 
-  const makePayment = async (account: AccountDto) => {
-    if (account.balance > 0) {
-      const paymentData = {
-        account_id: account.id,
-        user_id: account.user_id,
-        debit: account.balance,
-        credit: 0,
-        description: `Payment was made to ${account.user_id}`,
-      };
+    for (const account of accounts) {
+      if (account.balance > 0) {
+        const paymentData = {
+          account_id: account.id,
+          user_id: account.user_id,
+          debit: account.balance,
+          credit: 0,
+          type: 'debit',
+          description: `Payment was made to ${account.user_id}`,
+        };
 
-      await paymentService.addPaymentTransaction(paymentData);
-
-      console.log(`Notify ${account.user_id} about payment`);
+        await paymentService.addPaymentTransaction(paymentData);
+        await notificationQueue.add({
+          user_id: paymentData.user_id,
+          message: `You have received a payment. Amount: ${paymentData.debit}`,
+        });
+      }
     }
-  };
-
-  const paymentPromises = accounts.map(makePayment);
-  await Promise.all(paymentPromises);
+  } catch (error) {
+    logger.error(error.message);
+  }
 };
+
+paymentsQueue.add({}, { repeat: { cron: '0 17 * * *' } });

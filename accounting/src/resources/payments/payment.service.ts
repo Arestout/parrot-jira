@@ -1,9 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { TransactionDto } from './interfaces/transaction.interface';
 import { IAccountRepository } from './../accounts/interfaces/accountRepository.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
-import { random } from '../../utils/random';
 import { transactionSchema } from '../../libs/kafka/schemas/transaction.schema';
 import { TASK_STATUS_TOPIC } from './../../config/index';
 import { IPaymentRepository } from './interfaces/paymentRepository.interface';
@@ -41,6 +39,7 @@ export class PaymentService {
       user_id: paymentData.user_id,
       debit,
       credit,
+      type: paymentData.type,
       description,
     });
     const event = {
