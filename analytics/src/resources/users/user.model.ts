@@ -2,7 +2,7 @@ import { Sequelize, DataTypes, Model, Optional } from 'sequelize';
 
 import { UserDto } from './interfaces/user.interface';
 
-export type UserCreationAttributes = Optional<UserDto, 'public_id' | 'fullName' | 'role' >;
+export type UserCreationAttributes = Optional<UserDto, 'public_id' | 'fullName' | 'role'>;
 
 export class UserModel extends Model<UserDto, UserCreationAttributes> implements UserDto {
   public public_id: string;

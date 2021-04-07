@@ -39,6 +39,9 @@ sequelize
 const DB = {
   Tasks: TaskModel(sequelize),
   Users: UserModel(sequelize),
+  Payments: PaymentModel(sequelize),
+  Accounts: AccountModel(sequelize),
+  Transactions: TransactionModel(sequelize),
   sequelize, // connection instance (RAW queries)
   Sequelize, // library
 };

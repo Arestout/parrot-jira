@@ -16,6 +16,8 @@ export const taskHandler = async message => {
       return await taskService.create(message.value);
     case 'TaskValueSet':
       return await taskService.update(message.value);
+    case 'TaskCompleted':
+      return await taskService.update(message.value);
     default:
       return;
   }

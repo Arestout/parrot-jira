@@ -34,13 +34,14 @@ export class TaskRepository implements ITaskRepository {
     }
   }
 
-  public async getMostExpensiveTaskValue(start: string, end: string): Promise<number> {
-    const value = await this.tasks.max('value', {
+  public async getMostExpensiveTaskValue(start: Date, end: Date): Promise<number> {
+    const value: number = await this.tasks.max('value', {
       where: {
         createdAt: {
           [DB.Sequelize.Op.gt]: start,
           [DB.Sequelize.Op.lt]: end,
         },
+        completed: true,
       },
     });
 
