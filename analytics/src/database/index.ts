@@ -7,6 +7,7 @@ import UserModel from '../resources/users/user.model';
 import AccountModel from '../resources/accounts/account.model';
 import TransactionModel from '../resources/transactions/transaction.model';
 import PaymentModel from '../resources/payments/payment.model';
+import ErrorModel from '../resources/errors/error.model';
 
 const env = NODE_ENV;
 const sequelize = new Sequelize.Sequelize(dbConfig[env].database, dbConfig[env].username, dbConfig[env].password, {
@@ -42,6 +43,7 @@ const DB = {
   Payments: PaymentModel(sequelize),
   Accounts: AccountModel(sequelize),
   Transactions: TransactionModel(sequelize),
+  Errors: ErrorModel(sequelize),
   sequelize, // connection instance (RAW queries)
   Sequelize, // library
 };
