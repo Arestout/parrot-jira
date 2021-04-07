@@ -34,6 +34,23 @@ export class TaskRepository implements ITaskRepository {
     }
   }
 
+  public async sum(): Promise<number> {
+    const dayStart = new Date().setHours(0, 0, 0, 0);
+    const dayEnd = new Date().setHours(23, 59, 59, 999);
+
+    const tasksSum = await this.tasks.sum('value', {
+      where: {
+        createdAt: {
+          [DB.Sequelize.Op.gt]: dayStart,
+          [DB.Sequelize.Op.lt]: dayEnd,
+        },
+        completed: true,
+      },
+    });
+
+    return tasksSum;
+  }
+
   public async getMostExpensiveTaskValue(start: Date, end: Date): Promise<number> {
     const value: number = await this.tasks.max('value', {
       where: {
