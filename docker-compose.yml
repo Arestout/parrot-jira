@@ -154,6 +154,43 @@ services:
     networks:
       - parrot-accounting-network
 
+  analytics:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    container_name: parrot-jira-analytics
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT_ANALYTICS}
+      - REDIS_HOST=redis
+      - POSTGRES_USER=${POSTGRES_USER_ANALYTICS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ANALYTICS}
+      - POSTGRES_HOST=db-analytics
+      - POSTGRES_DB=${POSTGRES_DB_ANALYTICS}
+      - JWT_SECRET=${JWT_SECRET}
+      - USER_TOPIC=${USER_TOPIC}
+      - TASK_TOPIC=${TASK_TOPIC}
+      - TASK_STATUS_TOPIC=${TASK_STATUS_TOPIC}
+    restart: unless-stopped
+    networks:
+      - parrot-api-gateway-network
+      - parrot-analytics-network
+      - parrot-kafka-network
+    depends_on:
+      - db-analytics
+
+  db-analytics:
+    image: postgres:13.1-alpine
+    container_name: parrot-jira-analytics-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_ANALYTICS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ANALYTICS}
+      - POSTGRES_DB=${POSTGRES_DB_ANALYTICS}
+    volumes:
+      - parrot-jira-analytics-db:/var/lib/postgresql/data
+    networks:
+      - parrot-analytics-network
+
   zookeeper:
     image: wurstmeister/zookeeper:latest
     environment:
@@ -255,6 +292,8 @@ networks:
     driver: bridge
   parrot-accounting-network:
     driver: bridge
+  parrot-analytics-network:
+    driver: bridge
 
 volumes:
   parrot-jira-redis-data:
@@ -262,3 +301,4 @@ volumes:
   parrot-jira-api-gateway-db:
   parrot-jira-kafka-data:
   parrot-jira-accounting-db:
+  parrot-jira-analytics-db:

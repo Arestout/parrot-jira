@@ -80,6 +80,25 @@ services:
     ports:
       - '5434:5432'
 
+  analytics:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./analytics/src:/app/src
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3006:3006'
+      - '9232:9229'
+    stdin_open: true
+    tty: true
+
+  db-analytics:
+    ports:
+      - '5435:5432'
+
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: parrot-redis-commander
