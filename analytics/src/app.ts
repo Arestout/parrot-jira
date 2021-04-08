@@ -74,7 +74,7 @@ class App {
       await Promise.all([
         kafkaConsumer.subscribe({ topic: USER_TOPIC, fromBeginning: true }),
         kafkaConsumer.subscribe({ topic: TASK_TOPIC, fromBeginning: true }),
-        // kafkaConsumer.subscribe({ topic: TASK_STATUS_TOPIC, fromBeginning: true }),
+        kafkaConsumer.subscribe({ topic: TASK_STATUS_TOPIC, fromBeginning: true }),
       ]);
       await kafkaConsumer.receiveMessages();
     })();
