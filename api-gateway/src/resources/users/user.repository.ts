@@ -16,7 +16,11 @@ export class UserRepository implements IUserRepository {
   public async find(userId: string): Promise<UserDto> {
     if (isEmpty(userId)) throw new HttpException(400, "You're not userId");
 
-    const findUser: UserDto = await this.users.findByPk(userId);
+    const findUser: UserDto = await this.users.findOne({
+      where: {
+        public_id: userId,
+      },
+    });
     if (!findUser) throw new HttpException(409, "You're not user");
 
     return findUser;

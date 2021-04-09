@@ -8,9 +8,10 @@ import {
   Theme,
 } from '@material-ui/core';
 import { Formik, Form, FormikProps } from 'formik';
+
 import { useHistory } from 'react-router-dom';
-import * as Yup from 'yup';
-import axios from 'axios';
+import { useAuth } from 'src/hooks/useAuth';
+import { SignInSchema } from './SignIn.schema';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -62,27 +63,21 @@ export const SignIn: React.FC = () => {
     message: '',
     type: '',
   });
+  const { auth, dispatchFetchAuthOnLogin } = useAuth();
 
   const onLogin = async (data: ISignUpForm, setSubmitting: Function) => {
     try {
-      console.log(data);
       if (data) {
-        const response = await axios.post('/api/auth/login', data);
-        console.log(response.data);
-        if (response.data?.message === 'login') {
-          window.localStorage.setItem('token', response.data.tokenData.token);
-          window.localStorage.setItem(
-            'user',
-            JSON.stringify(response.data.userData)
-          );
+        dispatchFetchAuthOnLogin(data);
+
+        if (auth.access_token) {
           return history.push('/');
-        } else {
-          setFormStatus(formStatusProps.error);
         }
+
+        setFormStatus(formStatusProps.error);
       }
     } catch (error) {
       setFormStatus(formStatusProps.error);
-    } finally {
       setDisplayFormStatus(true);
       setSubmitting(false);
     }
@@ -96,15 +91,9 @@ export const SignIn: React.FC = () => {
           password: '',
         }}
         onSubmit={(values: ISignUpForm, actions) => {
-          console.log(values);
           onLogin(values, actions.setSubmitting);
         }}
-        validationSchema={Yup.object().shape({
-          email: Yup.string().email().required('Please enter user email'),
-          password: Yup.string()
-            .min(5)
-            .required('Please enter a valid password. Min. 5 characters'),
-        })}
+        validationSchema={SignInSchema}
       >
         {(props: FormikProps<ISignUpForm>) => {
           const {
