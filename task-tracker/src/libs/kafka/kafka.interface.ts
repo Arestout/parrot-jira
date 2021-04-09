@@ -1,4 +1,4 @@
-import { Message, ConsumerSubscribeTopic, Transaction } from 'kafkajs';
+import { Message, ConsumerSubscribeTopic, Transaction, TopicMessages } from 'kafkajs';
 
 export interface IKafkaProducer {
   encode<T>(schema: string, message: T): Promise<Buffer>;

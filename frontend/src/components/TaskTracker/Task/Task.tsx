@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -12,6 +12,8 @@ import {
 } from '@material-ui/core';
 
 import { api } from '../../../api';
+import { ITask } from 'src/redux/auth';
+import { useAuth } from 'src/hooks/useAuth';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -25,19 +27,30 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-export const Todo: React.FC = ({ todo }) => {
+type TodoProps = {
+  task: ITask;
+};
+
+export const Task: React.FC<TodoProps> = ({ task }) => {
   const classes = useStyles();
-  const [status, setStatus] = useState(todo.completed);
-  const textDecoration = status ? 'line-through' : '';
+  const {
+    auth: { user, access_token },
+    dispatchFetchUserTasks,
+  } = useAuth();
+  const textDecoration = task.completed ? 'line-through' : '';
 
   const closeTask = async () => {
     try {
       const data = {
-        ...todo,
+        ...task,
         completed: true,
       };
-      const response = await api.put(`/tasks/${todo.id}`, data);
-      setStatus(response.data.completed);
+      await api.put(`/tasks/${task.id}`, data, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      dispatchFetchUserTasks({ access_token, userId: user?.public_id });
     } catch (error) {
       console.log(error);
     }
@@ -54,7 +67,7 @@ export const Todo: React.FC = ({ todo }) => {
           <Grid container spacing={2}>
             <Grid item xs={7} style={{ textDecoration }}>
               <Typography variant="h5" component="h2">
-                {todo.description}
+                {task.description}
               </Typography>
             </Grid>
             <Grid item xs={5} className={classes.buttonsGrid}>
@@ -64,8 +77,8 @@ export const Todo: React.FC = ({ todo }) => {
                 aria-label="vertical contained primary button group"
                 variant="contained"
               >
-                <Button disabled={todo.completed} onClick={closeTask}>
-                  {todo.completed ? 'Completed' : 'Complete'}
+                <Button disabled={task.completed} onClick={closeTask}>
+                  {task.completed ? 'Completed' : 'Complete'}
                 </Button>
               </ButtonGroup>
             </Grid>

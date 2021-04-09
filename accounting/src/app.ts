@@ -9,9 +9,10 @@ import { Consumer } from 'kafkajs';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
 import { Routes } from './interfaces/routes.interface';
-import { PORT, NODE_ENV } from './config';
+import { PORT, NODE_ENV, TASK_STATUS_TOPIC, TASK_TOPIC, USER_TOPIC } from './config';
 import { kafka } from './libs/kafka/kafka.config';
 import { KafkaConsumer } from './libs/kafka/kafka.consumer';
+import { registerBullConsumers } from './libs/bull/bull.consumers';
 
 class App {
   public app: express.Application;
@@ -65,18 +66,21 @@ class App {
     });
   }
 
+  // TODO: move consumer to a separate app file
   private initializeKafkaConsumer() {
     const consumer: Consumer = kafka.consumer({ groupId: 'accounting-group' });
     const kafkaConsumer = new KafkaConsumer(consumer);
 
     (async function () {
       await Promise.all([
-        kafkaConsumer.subscribe({ topic: 'user-topic', fromBeginning: true }),
-        kafkaConsumer.subscribe({ topic: 'task-topic', fromBeginning: true }),
+        kafkaConsumer.subscribe({ topic: USER_TOPIC, fromBeginning: true }),
+        kafkaConsumer.subscribe({ topic: TASK_TOPIC, fromBeginning: true }),
+        kafkaConsumer.subscribe({ topic: TASK_STATUS_TOPIC, fromBeginning: true }),
       ]);
       await kafkaConsumer.receiveMessages();
     })();
   }
+
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
   }

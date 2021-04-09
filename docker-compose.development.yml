@@ -63,7 +63,7 @@ services:
 
   accounting:
     build:
-      context: ./api-gateway
+      context: ./accounting
       dockerfile: Dockerfile.dev
     command: npm run dev
     volumes:
@@ -79,3 +79,37 @@ services:
   db-accounting:
     ports:
       - '5434:5432'
+
+  analytics:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./analytics/src:/app/src
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3006:3006'
+      - '9232:9229'
+    stdin_open: true
+    tty: true
+
+  db-analytics:
+    ports:
+      - '5435:5432'
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: parrot-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=redis
+      # - HTTP_USER=root
+      # - HTTP_PASSWORD=qwerty
+    ports:
+      - 8082:8081
+    depends_on:
+      - redis
+    networks:
+      - parrot-api-gateway-network
