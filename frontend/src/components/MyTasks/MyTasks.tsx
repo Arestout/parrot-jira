@@ -1,35 +1,25 @@
 import React, { useState, useEffect } from 'react';
-
-import { api } from '../../api';
-import { Todo } from '../TaskTracker/Todo/Todo';
+import { useAuth } from 'src/hooks/useAuth';
+import { ITask } from 'src/redux/auth';
+import { Task } from '../TaskTracker/Task';
 
 export const MyTasks: React.FC = () => {
-  const [tasks, setTasks] = useState([]);
-  const userString = window.localStorage.getItem('user');
-  const user = userString && JSON.parse(userString);
-
-  const fetchTasks = async () => {
-    try {
-      const { data } = await api.get(`/tasks/developer/${user.public_id}`);
-      setTasks(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const {
+    auth: { user, access_token, userTasks },
+    dispatchFetchUserTasks,
+  } = useAuth();
 
   useEffect(() => {
     if (user && user.role === 'developer') {
-      fetchTasks();
+      dispatchFetchUserTasks({ access_token, userId: user.public_id });
     }
   }, []);
-
-  console.log(user.role);
 
   return (
     <>
       {user &&
         user.role === 'developer' &&
-        tasks.map((todo) => <Todo todo={todo} key={todo.id} />)}
+        userTasks.map((task: ITask) => <Task task={task} key={task.id} />)}
     </>
   );
 };

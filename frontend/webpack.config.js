@@ -12,7 +12,9 @@ module.exports = {
   devtool: 'source-map',
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
-    alias: {},
+    alias: {
+      src: path.resolve(__dirname, 'src'),
+    },
   },
   module: {
     rules: [...webpackRules],
