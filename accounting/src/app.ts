@@ -12,6 +12,7 @@ import { Routes } from './interfaces/routes.interface';
 import { PORT, NODE_ENV, TASK_STATUS_TOPIC, TASK_TOPIC, USER_TOPIC } from './config';
 import { kafka } from './libs/kafka/kafka.config';
 import { KafkaConsumer } from './libs/kafka/kafka.consumer';
+import { registerBullConsumers } from './libs/bull/bull.consumers';
 
 class App {
   public app: express.Application;
@@ -79,6 +80,7 @@ class App {
       await kafkaConsumer.receiveMessages();
     })();
   }
+
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
   }

@@ -29,7 +29,7 @@ export class AuthService {
     }
   }
 
-  public async login(userData: LoginUser): Promise<{ tokenData: TokenData; findUser: UserDto }> {
+  public async login(userData: LoginUser): Promise<{ tokenData: TokenData; userData: UserDto }> {
     if (isEmpty(userData)) throw new HttpException(400, "You're not userData");
 
     const transaction = await DB.sequelize.transaction();
@@ -44,7 +44,7 @@ export class AuthService {
       const tokenData = this.createToken(findUser);
 
       await transaction.commit();
-      return { tokenData, findUser };
+      return { tokenData, userData: findUser };
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -56,6 +56,6 @@ export class AuthService {
     const secret: string = process.env.JWT_SECRET;
     const expiresIn: number = 60 * 60;
 
-    return { expiresIn, token: jwt.sign(dataStoredInToken, secret, { expiresIn }) };
+    return { expiresIn, access_token: jwt.sign(dataStoredInToken, secret, { expiresIn }) };
   }
 }

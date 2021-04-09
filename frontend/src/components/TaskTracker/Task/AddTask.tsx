@@ -3,6 +3,7 @@ import { FormControl, Container, Button, TextField } from '@material-ui/core';
 import { Add } from '@material-ui/icons';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import { api } from '../../../api';
+import { useAuth } from 'src/hooks/useAuth';
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -13,9 +14,13 @@ const useStyles = makeStyles(() =>
   })
 );
 
-export const AddTodo: React.FC = ({ setTask }) => {
+export const AddTask: React.FC = () => {
   const [todoText, setTodoText] = useState('');
   const classes = useStyles();
+  const {
+    auth: { access_token },
+    dispatchFetchTasks,
+  } = useAuth();
 
   const handleChange = (e) => setTodoText(e.target.value);
   const createTodo = async (e) => {
@@ -24,11 +29,8 @@ export const AddTodo: React.FC = ({ setTask }) => {
       const data = {
         description: todoText,
       };
-      const response = await api.post('/tasks', data, {
-        timeout: 1000,
-        withCredentials: true,
-      });
-      setTask(response.data);
+      await api.post('/tasks', data);
+      dispatchFetchTasks(access_token);
     } catch (error) {
       console.log(error);
     } finally {
