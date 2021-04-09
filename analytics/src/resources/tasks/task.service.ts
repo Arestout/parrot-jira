@@ -2,8 +2,9 @@ import { startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 
 import { TaskDto } from './interfaces/task.interface';
 import { ITaskRepository } from './interfaces/taskRepository.interface';
+import { ITaskService } from './interfaces/taskService.interface';
 
-export class TaskService {
+export class TaskService implements ITaskService {
   public taskRepository: ITaskRepository;
 
   constructor(repository: ITaskRepository) {

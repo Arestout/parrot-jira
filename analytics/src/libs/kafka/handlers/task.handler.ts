@@ -1,42 +1,41 @@
 import { Message } from 'kafkajs';
-import { ErrorRepository } from '../../../resources/errors/error.repository';
-import { ErrorService } from '../../../resources/errors/error.service';
-import { TaskRepository } from '../../../resources/tasks/task.repository';
-import { TaskService } from '../../../resources/tasks/task.service';
+import { IErrorService } from '../../../resources/errors/interfaces/errorService.interface';
+import { IEventService } from '../../../resources/events/interfaces/eventService.interface';
+import { ITaskService } from '../../../resources/tasks/interfaces/taskService.interface';
+import { Handler } from './abstractHandler';
 
-const tasksRepository = new TaskRepository();
-const taskService = new TaskService(tasksRepository);
+export class TaskHandler extends Handler {
+  private taskService: ITaskService;
+  private eventService: IEventService;
 
-const errorRepository = new ErrorRepository();
-const errorService = new ErrorService(errorRepository);
-
-export const taskHandler = async message => {
-  const { event_version } = message.headers;
-
-  const checkVersion = (version: string) => version === event_version.toString();
-
-  const createError = async (message: Message) => {
-    const error = await errorService.create(message);
-    throw new Error(`Unsupported version. Error id: ${error.id}`);
-  };
-
-  switch (message.key.toString()) {
-    case 'TaskCreated':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await taskService.create(message.value);
-    case 'TaskValueSet':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await taskService.update(message.value);
-    case 'TaskCompleted':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await taskService.update(message.value);
-    default:
-      return;
+  public constructor(taskService: ITaskService, errorService: IErrorService, eventService: IEventService) {
+    super(errorService);
+    this.taskService = taskService;
+    this.eventService = eventService;
   }
-};
+
+  public async consumeMessage(message: Message): Promise<void> {
+    switch (message.key.toString()) {
+      case 'TaskCreated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.taskService.create(message.value), this.eventService.create(message)]);
+        break;
+      case 'TaskValueSet':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.taskService.update(message.value), this.eventService.create(message)]);
+        break;
+      case 'TaskCompleted':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.taskService.update(message.value), this.eventService.create(message)]);
+        break;
+      default:
+        return;
+    }
+  }
+}

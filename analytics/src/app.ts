@@ -4,14 +4,11 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import DB from './database';
-import { Consumer } from 'kafkajs';
 
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
 import { Route } from './interfaces/routes.interface';
-import { PORT, NODE_ENV, TASK_STATUS_TOPIC, TASK_TOPIC, USER_TOPIC } from './config';
-import { kafka } from './libs/kafka/kafka.config';
-import { KafkaConsumer } from './libs/kafka/kafka.consumer';
+import { PORT, NODE_ENV } from './config';
 
 class App {
   public app: express.Application;
@@ -24,7 +21,6 @@ class App {
     this.env = NODE_ENV;
 
     this.connectToDatabase();
-    this.initializeKafkaConsumer();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
@@ -63,21 +59,6 @@ class App {
     routes.forEach(route => {
       this.app.use('/', route.router);
     });
-  }
-
-  // TODO: move consumer to a separate app file
-  private initializeKafkaConsumer() {
-    const consumer: Consumer = kafka.consumer({ groupId: 'analytics-group' });
-    const kafkaConsumer = new KafkaConsumer(consumer);
-
-    (async function () {
-      await Promise.all([
-        kafkaConsumer.subscribe({ topic: USER_TOPIC, fromBeginning: true }),
-        kafkaConsumer.subscribe({ topic: TASK_TOPIC, fromBeginning: true }),
-        kafkaConsumer.subscribe({ topic: TASK_STATUS_TOPIC, fromBeginning: true }),
-      ]);
-      await kafkaConsumer.receiveMessages();
-    })();
   }
 
   private initializeErrorHandling() {

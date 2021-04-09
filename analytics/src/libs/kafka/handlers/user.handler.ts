@@ -1,41 +1,41 @@
 import { Message } from 'kafkajs';
-import { ErrorRepository } from '../../../resources/errors/error.repository';
-import { ErrorService } from '../../../resources/errors/error.service';
-import { UserRepository } from '../../../resources/users/user.repository';
-import { UserService } from '../../../resources/users/user.service';
+import { IErrorService } from '../../../resources/errors/interfaces/errorService.interface';
+import { IEventService } from '../../../resources/events/interfaces/eventService.interface';
+import { IUserService } from '../../../resources/users/interfaces/userService.interface';
+import { Handler } from './abstractHandler';
 
-const userService = new UserService(new UserRepository());
+export class UserHandler extends Handler {
+  private userService: IUserService;
+  private eventService: IEventService;
 
-const errorRepository = new ErrorRepository();
-const errorService = new ErrorService(errorRepository);
-
-export const userHandler = async message => {
-  const { event_version } = message.headers;
-
-  const checkVersion = (version: string) => version === event_version.toString();
-
-  const createError = async (message: Message) => {
-    const error = await errorService.create(message);
-    throw new Error(`Unsupported version. Error id: ${error.id}`);
-  };
-
-  switch (message.key.toString()) {
-    case 'UserCreated':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await userService.create(message.value);
-    case 'UserUpdated':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await userService.update(message.value);
-    case 'UserDeleted':
-      if (!checkVersion('1')) {
-        return createError(message);
-      }
-      return await userService.delete(message.value);
-    default:
-      return;
+  public constructor(userService: IUserService, errorService: IErrorService, eventService: IEventService) {
+    super(errorService);
+    this.userService = userService;
+    this.eventService = eventService;
   }
-};
+
+  public async consumeMessage(message: Message): Promise<void> {
+    switch (message.key.toString()) {
+      case 'UserCreated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.userService.create(message.value), this.eventService.create(message)]);
+        break;
+      case 'UserUpdated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.userService.update(message.value), this.eventService.create(message)]);
+        break;
+      case 'UserDeleted':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await Promise.all([this.userService.delete(message.value), this.eventService.create(message)]);
+        break;
+      default:
+        return;
+    }
+  }
+}

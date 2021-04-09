@@ -1,8 +1,9 @@
 import { TransactionDto } from './interfaces/transaction.interface';
 import { IAccountRepository } from './../accounts/interfaces/accountRepository.interface';
 import { ITransactionRepository } from './interfaces/transactionRepository.interface';
+import { ITransactionService } from './interfaces/transactionService.interface';
 
-export class TransactionService {
+export class TransactionService implements ITransactionService {
   public transactionRepository: ITransactionRepository;
   public accountRepository: IAccountRepository;
 
