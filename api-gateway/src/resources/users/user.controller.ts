@@ -4,6 +4,7 @@ import { UserDto } from './interfaces/user.interface';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
 import { KafkaProducer } from '../../libs/kafka/kafka.producer';
+import jwt from 'jsonwebtoken';
 
 const userRepository = new UserRepository();
 const kafkaProducer = new KafkaProducer();
@@ -20,11 +21,13 @@ export class UserController {
   };
 
   public getUserById = async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.params.id;
-
     try {
-      const findOneUserData: UserDto = await this.userService.findUserById(userId);
-      res.status(200).json({ data: findOneUserData, message: 'findOne' });
+      const headerToken = req.headers.authorization;
+      const decodedToken = jwt.decode(headerToken.replace('Bearer ', ''), { complete: true });
+      const { id } = decodedToken.payload;
+
+      const findOneUserData: UserDto = await this.userService.findUserById(id);
+      res.status(200).json(findOneUserData);
     } catch (error) {
       next(error);
     }

@@ -6,7 +6,7 @@ export interface DataStoredInToken {
 }
 
 export interface TokenData {
-  token: string;
+  access_token: string;
   expiresIn: number;
 }
 
