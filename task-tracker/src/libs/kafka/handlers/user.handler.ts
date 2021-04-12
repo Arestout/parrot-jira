@@ -1,24 +1,38 @@
-import { UserRepository } from '../../../resources/users/user.repository';
-import { UserService } from '../../../resources/users/user.service';
+import { Message } from 'kafkajs';
+import { IErrorService } from '../../../resources/errors/interfaces/errorService.interface';
+import { IUserService } from '../../../resources/users/interfaces/userService.interface';
+import { Handler } from './abstractHandler';
 
-const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
+export class UserHandler extends Handler {
+  private userService: IUserService;
 
-export const userHandler = async message => {
-  const { event_version } = message.headers;
-
-  if (event_version.toString() !== '1') {
-    throw new Error('Unsupported version');
+  public constructor(userService: IUserService, errorService: IErrorService) {
+    super(errorService);
+    this.userService = userService;
   }
 
-  switch (message.key.toString()) {
-    case 'UserCreated':
-      return await userService.create(message.value);
-    case 'UserUpdated':
-      return await userService.update(message.value);
-    case 'UserDeleted':
-      return await userService.delete(message.value);
-    default:
-      return;
+  public async consumeMessage(message: Message): Promise<void> {
+    switch (message.key.toString()) {
+      case 'UserCreated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.userService.create(message.value);
+        break;
+      case 'UserUpdated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.userService.update(message.value);
+        break;
+      case 'UserDeleted':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.userService.delete(message.value);
+        break;
+      default:
+        return;
+    }
   }
-};
+}

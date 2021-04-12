@@ -5,8 +5,9 @@ import { ITaskRepository } from './interfaces/taskRepository.interface';
 import { IKafkaProducer } from '../../libs/kafka/kafka.interface';
 import { taskValueSetSchema } from './../../libs/kafka/schemas/taskValueSet.schema';
 import { TASK_TOPIC } from '../../config';
+import { ITaskService } from './interfaces/taskService.interface';
 
-export class TaskService {
+export class TaskService implements ITaskService {
   public taskRepository: ITaskRepository;
   public kafkaProducer: IKafkaProducer;
 
@@ -15,8 +16,8 @@ export class TaskService {
     this.kafkaProducer = kafkaProducer;
   }
 
-  public async all(page: number): Promise<TaskDto[]> {
-    const tasks: TaskDto[] = await this.taskRepository.all(page);
+  public async all(): Promise<TaskDto[]> {
+    const tasks: TaskDto[] = await this.taskRepository.all();
 
     return tasks;
   }

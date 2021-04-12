@@ -7,8 +7,9 @@ import { random } from '../../utils/random';
 import { transactionSchema } from '../../libs/kafka/schemas/transaction.schema';
 import { ITransactionRepository } from './interfaces/transactionRepository.interface';
 import { TASK_STATUS_TOPIC } from './../../config/index';
+import { ITransactionService } from './interfaces/transactionService.interface';
 
-export class TransactionService {
+export class TransactionService implements ITransactionService {
   public transactionRepository: ITransactionRepository;
   public accountRepository: IAccountRepository;
   public kafkaProducer: IKafkaProducer;
@@ -25,7 +26,7 @@ export class TransactionService {
     return transactions;
   }
 
-  public async addTransaction(type: string, data): Promise<TransactionDto> {
+  public async create(type: string, data): Promise<TransactionDto> {
     const createTransaction = {
       task_id: data.id,
       debit: type === 'debit' ? random(10, 30) : 0,
@@ -34,7 +35,7 @@ export class TransactionService {
       description: data.description,
     };
 
-    const transaction: TransactionDto = await this.transactionRepository.addTransaction(data.user_id, createTransaction);
+    const transaction: TransactionDto = await this.transactionRepository.create(data.user_id, createTransaction);
     const { id, debit, credit, description } = transaction;
 
     const encodedMessage = await this.kafkaProducer.encode(transactionSchema, { user_id: data.user_id, id, debit, credit, type, description });

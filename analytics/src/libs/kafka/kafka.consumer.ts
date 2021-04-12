@@ -38,6 +38,7 @@ const eventService = new EventService(eventRepository);
 const taskHandler = new TaskHandler(taskService, errorService, eventService);
 const userHandler = new UserHandler(userService, errorService, eventService);
 const taskTransactionHandler = new TransactionHandler(transactionService, errorService, eventService);
+
 export class KafkaConsumer implements IKafkaConsumer {
   protected consumer: Consumer;
   private connectionPromise: Promise<void> | null;

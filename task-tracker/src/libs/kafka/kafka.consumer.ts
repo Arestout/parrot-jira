@@ -1,15 +1,26 @@
 import { Consumer, ConsumerSubscribeTopic } from 'kafkajs';
 import { IKafkaConsumer } from './kafka.interface';
 import { logger } from '../../utils/logger';
-import { userHandler } from './handlers/user.handler';
 import { registry } from './kafka.config';
+import { USER_TOPIC } from '../../config';
+import { Handler } from './handlers/abstractHandler';
+import { UserRepository } from '../../resources/users/user.repository';
+import { UserService } from '../../resources/users/user.service';
+import { UserHandler } from './handlers/user.handler';
+import { ErrorRepository } from '../../resources/errors/error.repository';
+import { ErrorService } from '../../resources/errors/error.service';
 
-// Test implementation
-// TODO refactor
+const errorRepository = new ErrorRepository();
+const errorService = new ErrorService(errorRepository);
+
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository);
+
+const userHandler = new UserHandler(userService, errorService);
 
 export class KafkaConsumer implements IKafkaConsumer {
   protected consumer: Consumer;
-  private handlers = new Map([['user-topic', userHandler]]);
+  private handlers = new Map<string, Handler>([[USER_TOPIC, userHandler]]);
 
   public constructor(consumer: Consumer) {
     this.consumer = consumer;
@@ -18,15 +29,11 @@ export class KafkaConsumer implements IKafkaConsumer {
   public async subscribe(data: ConsumerSubscribeTopic): Promise<void> {
     await this.consumer.connect();
     await this.consumer.subscribe(data);
-
-    if (typeof data.topic === 'string') {
-      await this.receiveMessages(data.topic);
-    }
   }
 
-  private async receiveMessages(topic: string): Promise<void> {
+  public async receiveMessages(): Promise<void> {
     await this.consumer.run({
-      eachMessage: async ({ message }) => {
+      eachMessage: async ({ topic, message }) => {
         try {
           const decodedMessage = {
             ...message,
@@ -34,9 +41,10 @@ export class KafkaConsumer implements IKafkaConsumer {
           };
 
           const messageHandler = this.handlers.get(topic);
-          await messageHandler(decodedMessage);
+          if (messageHandler) {
+            await messageHandler.consumeMessage(decodedMessage);
+          }
         } catch (error) {
-          // Maybe create Error topic ?
           logger.error(error);
           throw error;
         }

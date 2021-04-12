@@ -1,24 +1,38 @@
-import { TaskRepository } from '../../../resources/tasks/task.repository';
-import { TaskService } from '../../../resources/tasks/task.service';
-import { KafkaProducer } from '../kafka.producer';
+import { Message } from 'kafkajs';
+import { IErrorService } from '../../../resources/errors/interfaces/errorService.interface';
+import { ITaskService } from '../../../resources/tasks/interfaces/taskService.interface';
+import { Handler } from './abstractHandler';
 
-const tasksRepository = new TaskRepository();
-const kafkaProducer = new KafkaProducer();
-const taskService = new TaskService(tasksRepository, kafkaProducer);
+export class TaskHandler extends Handler {
+  private taskService: ITaskService;
 
-export const taskHandler = async message => {
-  const { event_version } = message.headers;
-
-  if (event_version.toString() !== '1') {
-    throw new Error('Unsupported version');
+  public constructor(taskService: ITaskService, errorService: IErrorService) {
+    super(errorService);
+    this.taskService = taskService;
   }
 
-  // console.log('HERE', message.value);
-
-  switch (message.key.toString()) {
-    case 'TaskCreated':
-      return await taskService.create(message.value);
-    default:
-      return;
+  public async consumeMessage(message: Message): Promise<void> {
+    switch (message.key.toString()) {
+      case 'TaskCreated':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.taskService.create(message.value);
+        break;
+      case 'TaskValueSet':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.taskService.update(message.value);
+        break;
+      case 'TaskCompleted':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.taskService.update(message.value);
+        break;
+      default:
+        return;
+    }
   }
-};
+}

@@ -7,12 +7,8 @@ import { ITaskRepository } from './interfaces/taskRepository.interface';
 export class TaskRepository implements ITaskRepository {
   public tasks = DB.Tasks;
 
-  public async all(page: number): Promise<TaskDto[]> {
-    const limit = 50;
-    const tasks: TaskDto[] = await this.tasks.findAll({
-      limit,
-      offset: page * limit,
-    });
+  public async all(): Promise<TaskDto[]> {
+    const tasks: TaskDto[] = await this.tasks.findAll();
 
     return tasks;
   }

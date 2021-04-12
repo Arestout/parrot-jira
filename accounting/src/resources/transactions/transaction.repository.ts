@@ -14,7 +14,7 @@ export class TransactionRepository implements ITransactionRepository {
     return transactions;
   }
 
-  public async addTransaction(user_id: string, transactionData: CreateTransaction): Promise<TransactionDto> {
+  public async create(user_id: string, transactionData: CreateTransaction): Promise<TransactionDto> {
     const dbTransaction = await DB.sequelize.transaction();
 
     try {

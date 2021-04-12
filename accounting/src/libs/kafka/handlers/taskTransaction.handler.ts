@@ -1,26 +1,32 @@
-import { AccountRepository } from '../../../resources/accounts/account.repository';
-import { TransactionRepository } from '../../../resources/transactions/transaction.repository';
-import { TransactionService } from '../../../resources/transactions/transaction.service';
-import { KafkaProducer } from '../kafka.producer';
+import { Message } from 'kafkajs';
+import { IErrorService } from '../../../resources/errors/interfaces/errorService.interface';
+import { ITransactionService } from '../../../resources/transactions/interfaces/transactionService.interface';
+import { Handler } from './abstractHandler';
 
-const accountsRepository = new AccountRepository();
-const transactionRepository = new TransactionRepository();
-const kafkaProducer = new KafkaProducer();
-const transactionService = new TransactionService(transactionRepository, accountsRepository, kafkaProducer);
+export class TransactionHandler extends Handler {
+  private transactionService: ITransactionService;
 
-export const taskTransactionHandler = async message => {
-  const { event_version } = message.headers;
-
-  if (event_version.toString() !== '1') {
-    throw new Error('Unsupported version');
+  public constructor(transactionService: ITransactionService, errorService: IErrorService) {
+    super(errorService);
+    this.transactionService = transactionService;
   }
 
-  switch (message.key.toString()) {
-    case 'TaskAssigned':
-      return await transactionService.addTransaction('credit', message.value);
-    case 'TaskCompleted':
-      return await transactionService.addTransaction('debit', message.value);
-    default:
-      return;
+  public async consumeMessage(message: Message): Promise<void> {
+    switch (message.key.toString()) {
+      case 'TaskAssigned':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.transactionService.create('credit', message.value);
+        break;
+      case 'TaskCompleted':
+        if (!this.checkVersion('1', message)) {
+          return this.createError(message);
+        }
+        await this.transactionService.create('debit', message.value);
+        break;
+      default:
+        return;
+    }
   }
-};
+}

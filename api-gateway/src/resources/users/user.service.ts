@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { Mutex } from 'async-mutex';
 
 import { IUserRepository } from './interfaces/userRepository.interface';
 import { CreateUserDto } from './user.dto';
@@ -11,7 +10,6 @@ import { USER_TOPIC } from './../../config/index';
 export class UserService {
   protected userRepository: IUserRepository;
   protected kafkaProducer: IKafkaProducer;
-  private mutex = new Mutex();
 
   constructor(repository: IUserRepository, kafkaProducer: IKafkaProducer) {
     this.userRepository = repository;
@@ -31,8 +29,6 @@ export class UserService {
   }
 
   public async createUser(userData: CreateUserDto): Promise<UserDto> {
-    const release = await this.mutex.acquire();
-
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const createUserData: UserDto = await this.userRepository.create({ ...userData, password: hashedPassword });
@@ -55,14 +51,10 @@ export class UserService {
       return createUserData;
     } catch (error) {
       throw error;
-    } finally {
-      release();
     }
   }
 
   public async updateUser(userId: string, userData: UserDto): Promise<UserDto> {
-    const release = await this.mutex.acquire();
-
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       await this.userRepository.update(userId, { ...userData, password: hashedPassword });
@@ -86,8 +78,6 @@ export class UserService {
       return updateUser;
     } catch (error) {
       throw error;
-    } finally {
-      release();
     }
   }
 
